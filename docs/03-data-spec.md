@@ -203,15 +203,15 @@ erDiagram
 
 ### 3.7 `p_order_item` (주문 라인) — Audit 미상속
 
-| 필드            | 타입           | 제약                     | 설명           |
-|---------------|--------------|------------------------|--------------|
-| order_item_id | UUID         | PK                     |              |
-| order_id      | UUID         | FK → p_order, NOT NULL |              |
-| menu_id       | UUID         | FK → p_menu, NOT NULL  |              |
-| quantity      | INTEGER      | NOT NULL, CHECK > 0    |              |
-| unit_price    | INTEGER      | NOT NULL               | 주문 당시 단가 스냅샷 |
-| created_at    | TIMESTAMP    | NOT NULL               |              |
-| created_by    | VARCHAR(100) |                        |              |
+| 필드            | 타입          | 제약                     | 설명           |
+|---------------|-------------|------------------------|--------------|
+| order_item_id | UUID        | PK                     |              |
+| order_id      | UUID        | FK → p_order, NOT NULL |              |
+| menu_id       | UUID        | FK → p_menu, NOT NULL  |              |
+| quantity      | INTEGER     | NOT NULL, CHECK > 0    |              |
+| unit_price    | INTEGER     | NOT NULL               | 주문 당시 단가 스냅샷 |
+| created_at    | TIMESTAMP   | NOT NULL               |              |
+| created_by    | VARCHAR(10) |                        |              |
 
 ### 3.8 `p_review` (리뷰)
 
