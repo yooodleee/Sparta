@@ -11,9 +11,16 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     open-in-view: false
     show-sql: false
     properties:
       hibernate:
         format_sql: true
+
+jwt:
+  # HS256 요구 32바이트(256bit) 이상. 운영에서는 반드시 JWT_SECRET 환경변수로 주입.
+  secret: ${JWT_SECRET:dev-only-secret-please-override-in-prod-32b+}
+  # 테스트 편의상 만료를 사실상 무한(100년)으로 둠.
+  # 운영 배포 시 반드시 JWT_EXPIRATION_MINUTES를 짧게(예: 30~60) 재설정할 것.
+  expiration-minutes: ${JWT_EXPIRATION_MINUTES:52560000}  # 100년 = 100 * 365 * 24 * 60
