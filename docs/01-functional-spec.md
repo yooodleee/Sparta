@@ -113,7 +113,8 @@
 
 ### 4.4 테스트
 
-- Repository / Service 단위 테스트 (성공 + 실패 케이스)
+- Repository / Service 단위 테스트 **필수** (성공 + 실패 케이스)
+- PR 머지 이전 테스트 통과가 전제 조건 (세부 전략·도구는 구현 단계에서 정의)
 
 ### 4.5 배포
 
@@ -123,7 +124,8 @@
 
 ### 4.6 API 문서화
 
-- springdoc-openapi(Swagger) 또는 Spring REST Docs
+- **springdoc-openapi(Swagger UI) 사용**. 실행 후 `/swagger-ui/index.html`에서 전체 API 확인 가능
+- Controller/DTO에 `@Operation`, `@Schema` 등 어노테이션을 붙여 엔드포인트·요청/응답 명세를 자동 노출
 
 ## 5. 제약/가정
 

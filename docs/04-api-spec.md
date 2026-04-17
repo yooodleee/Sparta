@@ -11,6 +11,7 @@
 - **Content-Type**: `application/json`
 - **페이지네이션**: `page`, `size`(10/30/50만 허용, 그 외는 10), `sort`(기본 `createdAt,DESC`)
 - **권한 재검증**: 매 요청 JWT payload role ↔ DB role 비교
+- **API 문서**: springdoc-openapi(Swagger UI) 기반. 실행 후 `/swagger-ui/index.html`에서 조회
 
 ### 응답 포맷
 
@@ -75,9 +76,9 @@
 |--------|--------------------|-----------------------|-------------------|
 | GET    | `/`                | 목록 (keyword, role 필터) | MANAGER/MASTER    |
 | GET    | `/{username}`      | 상세                    | 본인/MANAGER/MASTER |
-| PUT    | `/{username}`      | 정보 수정                 | 본인/MANAGER/MASTER |
+| PATCH  | `/{username}`      | 정보 수정                 | 본인/MANAGER/MASTER |
 | DELETE | `/{username}`      | Soft Delete           | MANAGER/MASTER    |
-| PUT    | `/{username}/role` | 권한 변경                 | MASTER            |
+| PATCH  | `/{username}/role` | 권한 변경                 | MASTER            |
 
 수정 가능 필드(본인): nickname, email, password, is_public / MANAGER·MASTER는 password 제외 / role은 MASTER 전용
 
@@ -88,7 +89,7 @@
 | POST   | `/`         | 등록           | MANAGER/MASTER |
 | GET    | `/`         | 목록 (keyword) | ALL            |
 | GET    | `/{areaId}` | 상세           | ALL            |
-| PUT    | `/{areaId}` | 수정           | MANAGER/MASTER |
+| PATCH  | `/{areaId}` | 수정           | MANAGER/MASTER |
 | DELETE | `/{areaId}` | Soft Delete  | MASTER         |
 
 ### 2.4 Category `/api/v1/categories`
@@ -98,7 +99,7 @@
 | POST   | `/`             | 등록           | MANAGER/MASTER |
 | GET    | `/`             | 목록 (keyword) | ALL            |
 | GET    | `/{categoryId}` | 상세           | ALL            |
-| PUT    | `/{categoryId}` | 수정           | MANAGER/MASTER |
+| PATCH  | `/{categoryId}` | 수정           | MANAGER/MASTER |
 | DELETE | `/{categoryId}` | Soft Delete  | MASTER         |
 
 ### 2.5 Store `/api/v1/stores`
@@ -108,7 +109,7 @@
 | POST   | `/`               | 가게 등록                                   | OWNER                    |
 | GET    | `/`               | 목록(평점 포함, keyword/categoryId/areaId 필터) | ALL                      |
 | GET    | `/{storeId}`      | 상세(평점 포함)                               | ALL                      |
-| PUT    | `/{storeId}`      | 수정                                      | OWNER(본인)/MANAGER/MASTER |
+| PATCH  | `/{storeId}`      | 수정                                      | OWNER(본인)/MANAGER/MASTER |
 | DELETE | `/{storeId}`      | Soft Delete                             | OWNER(본인)/MASTER         |
 | PATCH  | `/{storeId}/hide` | 숨김 토글                                   | OWNER(본인)/MANAGER/MASTER |
 
@@ -119,7 +120,7 @@
 | POST   | `/stores/{storeId}/menus` | 메뉴 등록 (AI 옵션) | OWNER(본인)                |
 | GET    | `/stores/{storeId}/menus` | 가게 메뉴 목록      | ALL                      |
 | GET    | `/menus/{menuId}`         | 메뉴 상세         | ALL                      |
-| PUT    | `/menus/{menuId}`         | 수정            | OWNER(본인)/MANAGER/MASTER |
+| PATCH  | `/menus/{menuId}`         | 수정            | OWNER(본인)/MANAGER/MASTER |
 | DELETE | `/menus/{menuId}`         | Soft Delete   | OWNER(본인)/MASTER         |
 | PATCH  | `/menus/{menuId}/hide`    | 숨김 토글         | OWNER(본인)/MANAGER/MASTER |
 
@@ -130,7 +131,7 @@
 | POST   | `/`                 | 주문 생성                  | CUSTOMER                       |
 | GET    | `/`                 | 목록(storeId, status 필터) | 본인/OWNER(본인 가게)/MANAGER/MASTER |
 | GET    | `/{orderId}`        | 상세                     | 본인/OWNER(본인 가게)/MANAGER/MASTER |
-| PUT    | `/{orderId}`        | 요청사항 수정                | CUSTOMER(본인, PENDING만)/MASTER  |
+| PATCH  | `/{orderId}`        | 요청사항 수정                | CUSTOMER(본인, PENDING만)/MASTER  |
 | PATCH  | `/{orderId}/status` | 상태 변경                  | OWNER(본인)/MANAGER/MASTER       |
 | PATCH  | `/{orderId}/cancel` | 취소(5분 이내)              | CUSTOMER(본인)/MASTER            |
 | DELETE | `/{orderId}`        | Soft Delete            | MASTER                         |
@@ -142,7 +143,7 @@
 | POST   | `/orders/{orderId}/payments` | 결제 처리       | CUSTOMER(본인)      |
 | GET    | `/payments`                  | 목록          | 본인/MANAGER/MASTER |
 | GET    | `/payments/{paymentId}`      | 상세          | 본인/MANAGER/MASTER |
-| PUT    | `/payments/{paymentId}`      | 상태 수정       | MANAGER/MASTER    |
+| PATCH  | `/payments/{paymentId}`      | 상태 수정       | MANAGER/MASTER    |
 | DELETE | `/payments/{paymentId}`      | Soft Delete | MASTER            |
 
 ### 2.9 Review `/api/v1/...`
@@ -152,7 +153,7 @@
 | POST   | `/orders/{orderId}/reviews` | 리뷰 작성                  | CUSTOMER(본인, COMPLETED) |
 | GET    | `/reviews`                  | 목록(storeId, rating 필터) | ALL                     |
 | GET    | `/reviews/{reviewId}`       | 상세                     | ALL                     |
-| PUT    | `/reviews/{reviewId}`       | 수정                     | CUSTOMER(본인)            |
+| PATCH  | `/reviews/{reviewId}`       | 수정                     | CUSTOMER(본인)            |
 | DELETE | `/reviews/{reviewId}`       | Soft Delete            | 본인/MANAGER/MASTER       |
 
 ### 2.10 Address `/api/v1/addresses`
@@ -162,7 +163,7 @@
 | POST   | `/`                    | 등록          | CUSTOMER            |
 | GET    | `/`                    | 내 목록        | CUSTOMER(본인)        |
 | GET    | `/{addressId}`         | 상세          | CUSTOMER(본인)        |
-| PUT    | `/{addressId}`         | 수정          | CUSTOMER(본인)        |
+| PATCH  | `/{addressId}`         | 수정          | CUSTOMER(본인)        |
 | DELETE | `/{addressId}`         | Soft Delete | CUSTOMER(본인)/MASTER |
 | PATCH  | `/{addressId}/default` | 기본 배송지 설정   | CUSTOMER(본인)        |
 

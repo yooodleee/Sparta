@@ -28,3 +28,5 @@
 - 주문 취소는 생성 후 5분 이내만 허용
 - 결제는 CARD 단일, PG 미연동 (DB 저장만)
 - AI 요청 텍스트 100자 제한, 응답 50자 이하 프롬프트 자동 삽입
+- API 문서화: springdoc-openapi(Swagger UI) 사용 — `/swagger-ui/index.html`
+- Repository/Service 단위 테스트는 **필수** (성공·실패 케이스 모두)

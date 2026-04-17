@@ -9,9 +9,9 @@
 
 ## 작업 시 반드시 지킬 것
 
-- `main` 브랜치에 **직접 push 금지**. 모든 작업은 `dev`에서 분기한 issue 브랜치에서 진행한다.
-- 작업 전, 현재 브랜치가 `dev`에서 분기된 issue 브랜치인지 확인한다.
-- 병합 방향은 `main` ← `dev` ← `issue branch`. PR을 통해서만 merge한다.
+- `main` 브랜치에 **직접 push 금지**. 모든 작업은 `main`에서 분기한 issue 브랜치에서 진행한다.
+- 작업 전, 현재 브랜치가 `main`에서 분기된 issue 브랜치인지 확인한다.
+- 병합 방향은 `main` ← `issue branch`. PR을 통해서만 merge한다.
 - 네이밍은 모두 **영문 소문자**, `작업내용요약`은 **동사-목적어** 형태 2~4단어.
   - 브랜치: `[task]/[issue-no]-[summary]` (예: `feature/12-develop-bert4rec`)
   - 커밋: `[task]: [summary] (#[issue-no])` (예: `data: preprocess news crawling data (#7)`)

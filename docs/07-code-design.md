@@ -102,7 +102,7 @@ boolean isValid(String token);
 - `UserRepository extends JpaRepository<UserEntity, String>`
     - `existsByUsername`, `existsByEmail`, `findByUsername`
 - `UserServiceV1`: `find`, `update`, `delete`, `changeRole`
-- `UserControllerV1`: GET/PUT/DELETE `/users/**`
+- `UserControllerV1`: GET/PATCH/DELETE `/users/**`
 
 ### 3.2 Auth
 
