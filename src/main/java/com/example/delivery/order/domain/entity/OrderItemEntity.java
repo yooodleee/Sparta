@@ -1,5 +1,7 @@
 package com.example.delivery.order.domain.entity;
 
+import com.example.delivery.global.common.exception.BusinessException;
+import com.example.delivery.global.common.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -48,10 +50,10 @@ public class OrderItemEntity {
     @Builder
     private OrderItemEntity(UUID menuId, Integer quantity, Integer unitPrice){
         if(quantity == null || quantity <= 0){
-            throw new IllegalArgumentException("quantity는 0보다 커야 합니다.");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "quantity는 0보다 커야 합니다.");
         }
         if(unitPrice == null || unitPrice < 0){
-            throw new IllegalArgumentException("unitPrice는 음수면 안 됩니다.");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "unitPrice는 음수면 안 됩니다.");
         }
         this.menuId = menuId;
         this.quantity = quantity;
