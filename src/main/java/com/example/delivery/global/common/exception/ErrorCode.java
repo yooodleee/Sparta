@@ -20,6 +20,14 @@ public enum ErrorCode {
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
 
+    //Menu
+    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다."),
+    STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "가게룰 찾을 수 없습니다."),
+
+    //AI
+    AI_LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "AI 요청 기록을 찾을 수 없습니다."),
+    AI_DESCRIPTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI 설명 생성에 실패했습니다."),
+
     //Order
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."),
     INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "주문 상태를 변경할 수 없습니다."),
