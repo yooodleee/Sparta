@@ -1,4 +1,4 @@
-package com.example.delivery.order.domain.repository;
+package com.example.delivery.order.infrastructure.repository;
 
 import com.example.delivery.order.domain.entity.OrderItemEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
