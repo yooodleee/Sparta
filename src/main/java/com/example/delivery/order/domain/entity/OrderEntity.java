@@ -1,5 +1,7 @@
 package com.example.delivery.order.domain.entity;
 
+import com.example.delivery.global.common.exception.BusinessException;
+import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.infrastructure.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -8,9 +10,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
 
 @Entity
 @Getter
@@ -18,6 +24,8 @@ import java.util.UUID;
 @SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderEntity extends BaseEntity {
+
+    private static final int CANCEL_LIMIT_MINUTES = 5;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -62,5 +70,49 @@ public class OrderEntity extends BaseEntity {
     public void addItem(OrderItemEntity item){
         this.items.add(item);
         item.assignOrder(this);
+    }
+
+    public void cancelByCustomer(Clock clock){
+        if(this.status != OrderStatus.PENDING){
+            throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS,
+                    "PENDING 상태에서만 취소 가능합니다. (현재: %s)".formatted(this.status));
+        }
+        LocalDateTime now = LocalDateTime.now(clock);
+        if(Duration.between(getCreatedAt(), now).toMinutes() >= CANCEL_LIMIT_MINUTES){
+            throw new BusinessException(ErrorCode.ORDER_CANCEL_TIMEOUT);
+        }
+        this.status = OrderStatus.CANCELLED;
+    }
+
+    public void cancelByMaster(){
+        this.status = OrderStatus.CANCELLED;
+    }
+
+    public void changeStatusByOwner(OrderStatus next){
+        if(!this.status.canTransitionTo(next)){
+            throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS,
+                    "OWNER는 %s -> %s로 전이할 수 없습니다.".formatted(this.status, next));
+        }
+        this.status = next;
+    }
+
+    public void changeStatusByManager(OrderStatus next){
+        if(next == OrderStatus.CANCELLED){
+            throw new BusinessException(ErrorCode.FORBIDDEN,
+                    "MANAGER는 주문을 취소할 수 없습니다. (현재: %s)".formatted(this.status));
+        }
+        this.status = next;
+    }
+
+    public void changeStatusByMaster(OrderStatus next){
+        this.status = next;
+    }
+
+    public void updateRequest(String request){
+        if(this.status != OrderStatus.PENDING){
+            throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS,
+                    "PENDING 상태에서만 요청사항을 수정할 수 있습니다. (현재: %s)".formatted(this.status));
+        }
+        this.request = request;
     }
 }
