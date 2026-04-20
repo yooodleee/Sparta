@@ -211,8 +211,8 @@ public record ApiResponse<T>(int status, String message, T data) {
 
 ## 6. 테스트 가이드 (요약)
 
-- Repository: `@DataJpaTest`(H2) — 성공/실패 케이스
-- Service: Mockito로 Repository/Client mock — 성공/실패 케이스
+- Repository: 미작성 (팀 컨벤션), 개인 판단으로 필요 시 작성
+- Service: Mockito mock 또는 인터페이스 기반 Fake 구현 — 성공/실패 케이스 필수
 - Controller: `@WebMvcTest` + MockMvc — 권한/Validation 검증
 - [도전] Testcontainers + PostgreSQL로 통합 테스트 확장 가능
 
