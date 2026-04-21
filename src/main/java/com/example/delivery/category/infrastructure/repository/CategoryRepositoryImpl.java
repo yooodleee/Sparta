@@ -27,6 +27,11 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     }
 
     @Override
+    public Optional<CategoryEntity> findByNameIncludingDeleted(String categoryName) {
+        return categoryJpaRepository.findByNameAndDeletedAtIsNotNull(categoryName);
+    }
+
+    @Override
     public Optional<CategoryEntity> findById(UUID categoryId) {
         return categoryJpaRepository.findByIdAndDeletedAtIsNull(categoryId);
     }

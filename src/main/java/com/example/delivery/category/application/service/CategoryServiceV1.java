@@ -1,5 +1,6 @@
 package com.example.delivery.category.application.service;
 
+import com.example.delivery.category.application.exception.CategoryAlreadyDeletedException;
 import com.example.delivery.category.application.exception.CategoryAlreadyExistsException;
 import com.example.delivery.category.application.exception.CategoryNotFoundException;
 import com.example.delivery.category.domain.entity.CategoryEntity;
@@ -33,6 +34,9 @@ public class CategoryServiceV1 {
     public ResCreateCategoryDto createCategory(ReqCreateCategoryDto request) {
 
         String categoryName = request.name().trim();
+
+        // 삭제된 카테고리인지 확인
+        validateDeletedCategory(categoryName);
 
         // 이미 존재하는 카테고리명인지 확인
         validateDuplicateCategoryName(categoryName);
@@ -83,6 +87,13 @@ public class CategoryServiceV1 {
     private CategoryEntity getCategoryEntity(UUID categoryId) {
         return categoryRepository.findById(categoryId)
                 .orElseThrow(CategoryNotFoundException::new);
+    }
+
+    private void validateDeletedCategory(String categoryName) {
+        if (categoryRepository.findByNameIncludingDeleted(categoryName).isPresent()) {
+            throw new CategoryAlreadyDeletedException();
+        }
+
     }
 
     private void validateDuplicateCategoryName(String categoryName) {

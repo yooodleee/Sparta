@@ -12,6 +12,8 @@ public interface CategoryJpaRepository extends JpaRepository<CategoryEntity, UUI
 
     Optional<CategoryEntity> findByName(String name);
 
+    Optional<CategoryEntity> findByNameAndDeletedAtIsNotNull(String name);
+
     Optional<CategoryEntity> findByIdAndDeletedAtIsNull(UUID id);
 
     Page<CategoryEntity> findAllByDeletedAtIsNull(Pageable pageable);

@@ -13,6 +13,8 @@ public interface CategoryRepository {
 
     Optional<CategoryEntity> findByName(String name);
 
+    Optional<CategoryEntity> findByNameIncludingDeleted(String categoryName);
+
     Optional<CategoryEntity> findById(UUID categoryId);
 
     Page<CategoryEntity> findAll(Pageable pageable);
