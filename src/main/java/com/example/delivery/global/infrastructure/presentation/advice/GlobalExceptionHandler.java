@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
         log.warn("BusinessException: {} - {}", code.name(), e.getMessage());
         return ResponseEntity
                 .status(code.getStatus())
-                .body(ApiResponse.error(code.code(), code.name()));
+                .body(ApiResponse.error(code.code(), code.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
