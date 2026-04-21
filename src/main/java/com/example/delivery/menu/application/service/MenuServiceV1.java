@@ -37,6 +37,8 @@ public class MenuServiceV1 {
                 .description(reqDto.description())
                 .price(reqDto.price())
                 .isHidden(reqDto.isHidden())
+                .isSoldOut(reqDto.isSoldOut())
+                .imageUrl(reqDto.imageUrl())
                 .aiDescription(reqDto.aiRequestId() != null) //AI ID가 넘어왔다면 AI가 작성한 것으로 간주
                 .build();
 
@@ -54,12 +56,27 @@ public class MenuServiceV1 {
     }
 
     //손님용 메뉴 목록 조회
-    public List<ResMenuDto> getVisibleMenus(UUID storeId){
+    public List<ResMenuDto> getVisibleMenus(UUID storeId, String keyword){
+        List<MenuEntity> menus;
+
+        //검색어가 있으면 이름으로 필터링, 없으면 전체 조회
+        if (keyword != null && !keyword.isBlank()){
+            menus = menuRepository.findVisibleMenusByStoreIdAndNameContaining(storeId, keyword);
+        }else {
+            menus = menuRepository.findVisibleMenusByStoreId(storeId);
+        }
+
         //삭제 안 됨 + 숨김 안 됨 조건으로 리스트를 가져옴
-        return menuRepository.findVisibleMenusByStoreId(storeId)
-                .stream()
-                .map(ResMenuDto::from)
-                .toList();
+        return  menus.stream()
+                     .map(ResMenuDto::from)
+                     .toList();
+    }
+
+    //단건 메뉴 상세 조회 로직
+    public ResMenuDto getMenu(UUID menuId){
+        MenuEntity menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
+        return ResMenuDto.from(menu);
     }
 
 }
