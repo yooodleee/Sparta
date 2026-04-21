@@ -12,7 +12,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.order.domain.entity.OrderEntity;
-import com.example.delivery.order.infrastructure.repository.OrderRepository;
+import com.example.delivery.order.domain.repository.OrderRepository;
 import static org.mockito.Mockito.mock;
 import com.example.delivery.payment.domain.entity.PaymentEntity;
 import com.example.delivery.payment.domain.entity.PaymentStatus;
