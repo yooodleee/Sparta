@@ -48,7 +48,7 @@ graph TB
 | 복합 검색       | QueryDSL JPA                   | [도전]                                |
 | DB          | PostgreSQL 15+                 | EC2에 직접 설치                          |
 | Build       | Gradle 8.x                     |                                     |
-| API 문서      | springdoc-openapi (Swagger UI) | 또는 Spring REST Docs                 |
+| API 문서      | springdoc-openapi (Swagger UI) | `@Operation`/`@Schema` 인라인, RestDocs 미사용 |
 | HTTP Client | `RestTemplate` 또는 `WebClient`  | Gemini 호출, 팀 선택                     |
 | AI          | Gemini 1.5 Flash               | REST 호출                             |
 | 로깅          | Logback                        | [도전]                                |
