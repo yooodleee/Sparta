@@ -74,6 +74,12 @@ public class CategoryServiceV1 {
         return ResGetCategoryDto.from(category);
     }
 
+    @Transactional
+    public void deleteCategory(UUID categoryId, String deletedBy) {
+        CategoryEntity category = getCategoryEntity(categoryId);
+        category.softDelete(deletedBy);
+    }
+
     private CategoryEntity getCategoryEntity(UUID categoryId) {
         return categoryRepository.findById(categoryId)
                 .orElseThrow(CategoryNotFoundException::new);

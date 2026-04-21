@@ -7,9 +7,11 @@ import com.example.delivery.category.presentation.dto.response.ResCreateCategory
 import com.example.delivery.category.presentation.dto.response.ResGetCategoryDto;
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.global.common.response.PageResponse;
+import com.example.delivery.global.infrastructure.security.UserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -48,5 +50,15 @@ public class CategoryControllerV1 {
             @Valid @RequestBody ReqUpdateCategoryDto request
     ) {
         return ApiResponse.ok(categoryService.updateCategory(categoryId, request));
+    }
+
+    @DeleteMapping("/{categoryId}")
+    @PreAuthorize("hasAnyRole('MASTER')")
+    public ApiResponse<Void> deleteCategory(
+            @PathVariable UUID categoryId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        categoryService.deleteCategory(categoryId, userPrincipal.username());
+        return ApiResponse.ok(null);
     }
 }
