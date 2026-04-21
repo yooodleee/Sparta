@@ -33,6 +33,14 @@ public enum ErrorCode {
     INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "주문 상태를 변경할 수 없습니다."),
     ORDER_CANCEL_TIMEOUT(HttpStatus.BAD_REQUEST, "주문 생성 후 5분이 경과하여 취소할 수 없습니다."),
 
+    //Payment
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "결제 정보를 찾을 수 없습니다."),
+    PAYMENT_ALREADY_PROCESSED(HttpStatus.CONFLICT, "해당 주문에 이미 처리된 결제가 존재합니다."),
+    PAYMENT_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "결제 처리 중 오류가 발생했습니다."),
+    INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "유효하지 않은 결제 금액입니다."),
+    INVALID_PAYMENT_STATUS(HttpStatus.BAD_REQUEST, "현재 결제 상태에서는 해당 작업을 수행할 수 없습니다."),
+
+    // Category
     CATEGORY_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 존재하는 카테고리 이름입니다.");
 
 
