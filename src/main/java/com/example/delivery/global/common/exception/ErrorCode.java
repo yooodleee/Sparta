@@ -31,8 +31,12 @@ public enum ErrorCode {
     //Order
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."),
     INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "주문 상태를 변경할 수 없습니다."),
-    ORDER_CANCEL_TIMEOUT(HttpStatus.BAD_REQUEST, "주문 생성 후 5분이 경과하여 취소할 수 없습니다.");
+    ORDER_CANCEL_TIMEOUT(HttpStatus.BAD_REQUEST, "주문 생성 후 5분이 경과하여 취소할 수 없습니다."),
 
+    // Review
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
+    DUPLICATE_REVIEW(HttpStatus.CONFLICT, "이미 해당 주문에 리뷰를 작성했습니다."),
+    ORDER_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "완료된 주문에만 리뷰를 작성할 수 있습니다.");
 
     private final HttpStatus status;
     private final String message;
