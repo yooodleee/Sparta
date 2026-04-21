@@ -4,38 +4,12 @@
 
 ---
 
-## 1. 배포 아키텍처
+## 1. AWS 인프라 구성도 / 배포(CI/CD) 흐름
 
-```mermaid
-graph TB
-    subgraph CLIENT["클라이언트"]
-        A["Postman / Swagger UI"]
-    end
-
-    subgraph AWS["AWS Cloud (프리티어)"]
-        subgraph VPC["VPC"]
-            subgraph PUB["Public Subnet"]
-                subgraph EC2["EC2 t2.micro (Ubuntu 22.04)"]
-                    B["Spring Boot :8080<br/>(JWT + Spring Security)"]
-                    C["PostgreSQL :5432"]
-                end
-            end
-        end
-        D["Security Group<br/>22 SSH · 8080 App"]
-    end
-
-    subgraph EXT["외부"]
-        E["Google Gemini API"]
-    end
-
-    A -->|"HTTP :8080 Bearer JWT"| B
-    B -->|"JDBC"| C
-    B -->|"REST"| E
-    D -.-> EC2
-```
-
-- 단일 EC2 인스턴스에 Spring Boot + PostgreSQL을 함께 배치 (MVP)
-- AI 호출은 외부(Google Gemini)로 HTTPS 아웃바운드
+> **TBD — 추후 업데이트 예정.**
+> AWS 서비스 아이콘 기반 인프라 구성도 및 CI/CD 파이프라인 다이어그램은 아래 항목이 확정된 뒤 추가한다.
+> - 표현 수단 결정 (Mermaid `architecture-beta` / draw.io + AWS 스텐실 / 기타)
+> - 실제 AWS 리소스 구성 확정 (단일 EC2 MVP 유지 여부, RDS 분리 시점 등)
 
 ## 2. 기술 스택
 
@@ -65,26 +39,7 @@ graph TB
 - 프로필 전환: `-Dspring.profiles.active=prod`
 - 환경별 `application-{profile}.yml` 분리
 
-## 4. 배포 방식
-
-### 옵션 A — JAR 직접 실행 (권장: 학습 목적)
-
-```
-1. 로컬: ./gradlew clean build
-2. scp build/libs/app.jar ubuntu@{EC2}:/home/ubuntu/
-3. EC2: nohup java -jar -Dspring.profiles.active=prod app.jar > app.log 2>&1 &
-```
-
-### 옵션 B — Docker
-
-```
-1. Dockerfile 작성
-2. docker build -t delivery-app .
-3. 레지스트리 푸시 or 이미지 직접 전송
-4. EC2: docker run -d -p 8080:8080 --env-file .env delivery-app
-```
-
-## 5. 네트워크 / 보안
+## 4. 네트워크 / 보안
 
 - **Security Group 인바운드**: 22(SSH, 내 IP만), 8080(App, 0.0.0.0/0)
 - **DB 포트 5432**: 외부 노출 X (로컬호스트 통신만)
@@ -97,17 +52,17 @@ graph TB
 - **권한 재검증**: JWT payload role ↔ DB role. 권한 변경 / 유저 삭제 시 기존 토큰 사용 불가
     - DB 부하 완화: 향후 Redis 캐시 도입 고려
 
-## 6. 모니터링 / 로깅
+## 5. 모니터링 / 로깅
 
 - Logback로 `app.log` 파일 롤링 ([도전])
 - 추후 고려: CloudWatch Agent 연동, Spring Actuator `/health`
 
-## 7. 백업 / 복구 (MVP)
+## 6. 백업 / 복구 (MVP)
 
 - 수동 `pg_dump` 주기 실행
 - 운영 확장 시 RDS 전환 + 자동 스냅샷
 
-## 8. 확장 로드맵
+## 7. 확장 로드맵
 
 | 단계  | 변경                             |
 |-----|--------------------------------|
