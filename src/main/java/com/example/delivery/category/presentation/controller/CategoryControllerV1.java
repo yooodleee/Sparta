@@ -2,6 +2,7 @@ package com.example.delivery.category.presentation.controller;
 
 import com.example.delivery.category.application.service.CategoryServiceV1;
 import com.example.delivery.category.presentation.dto.request.ReqCreateCategoryDto;
+import com.example.delivery.category.presentation.dto.request.ReqUpdateCategoryDto;
 import com.example.delivery.category.presentation.dto.response.ResCreateCategoryDto;
 import com.example.delivery.category.presentation.dto.response.ResGetCategoryDto;
 import com.example.delivery.global.common.response.ApiResponse;
@@ -38,5 +39,14 @@ public class CategoryControllerV1 {
     @GetMapping("/{categoryId}")
     public ApiResponse<ResGetCategoryDto> getCategory(@PathVariable UUID categoryId) {
         return ApiResponse.ok(categoryService.getCategory(categoryId));
+    }
+
+    @PatchMapping("/{categoryId}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'MASTER')")
+    public ApiResponse<ResGetCategoryDto> updateCategory(
+            @PathVariable UUID categoryId,
+            @Valid @RequestBody ReqUpdateCategoryDto request
+    ) {
+        return ApiResponse.ok(categoryService.updateCategory(categoryId, request));
     }
 }

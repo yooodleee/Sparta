@@ -5,10 +5,10 @@ import com.example.delivery.category.application.exception.CategoryNotFoundExcep
 import com.example.delivery.category.domain.entity.CategoryEntity;
 import com.example.delivery.category.domain.repository.CategoryRepository;
 import com.example.delivery.category.presentation.dto.request.ReqCreateCategoryDto;
+import com.example.delivery.category.presentation.dto.request.ReqUpdateCategoryDto;
 import com.example.delivery.category.presentation.dto.response.ResCreateCategoryDto;
 import com.example.delivery.category.presentation.dto.response.ResGetCategoryDto;
 import com.example.delivery.global.common.response.PageResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,7 +30,7 @@ public class CategoryServiceV1 {
     private final CategoryRepository categoryRepository;
 
     @Transactional
-    public ResCreateCategoryDto createCategory(@Valid ReqCreateCategoryDto request) {
+    public ResCreateCategoryDto createCategory(ReqCreateCategoryDto request) {
 
         String categoryName = request.name().trim();
 
@@ -59,6 +59,19 @@ public class CategoryServiceV1 {
 
     public ResGetCategoryDto getCategory(UUID categoryId) {
         return ResGetCategoryDto.from(getCategoryEntity(categoryId));
+    }
+
+    @Transactional
+    public ResGetCategoryDto updateCategory(UUID categoryId, ReqUpdateCategoryDto request) {
+
+        CategoryEntity category = getCategoryEntity(categoryId);
+
+        String categoryName = request.name().trim();
+        validateDuplicateCategoryName(categoryName);
+
+        category.updateName(categoryName);
+
+        return ResGetCategoryDto.from(category);
     }
 
     private CategoryEntity getCategoryEntity(UUID categoryId) {
