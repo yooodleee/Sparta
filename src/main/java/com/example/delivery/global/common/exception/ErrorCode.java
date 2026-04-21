@@ -31,7 +31,9 @@ public enum ErrorCode {
     //Order
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."),
     INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "주문 상태를 변경할 수 없습니다."),
-    ORDER_CANCEL_TIMEOUT(HttpStatus.BAD_REQUEST, "주문 생성 후 5분이 경과하여 취소할 수 없습니다.");
+    ORDER_CANCEL_TIMEOUT(HttpStatus.BAD_REQUEST, "주문 생성 후 5분이 경과하여 취소할 수 없습니다."),
+
+    CATEGORY_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 존재하는 카테고리 이름입니다.");
 
 
     private final HttpStatus status;
