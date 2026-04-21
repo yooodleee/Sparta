@@ -54,7 +54,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_PATHS).permitAll()
                         .requestMatchers("/api/v1/test/me").authenticated()
-                        // TODO: 실제 도메인 엔드포인트가 확장되면 규칙 세분화
+                        .requestMatchers(HttpMethod.POST, "/api/v1/orders/*/reviews").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/reviews/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/reviews/*").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtTokenProvider),

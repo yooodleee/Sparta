@@ -19,7 +19,10 @@ import org.hibernate.annotations.SQLRestriction;
 @Entity
 @Table(
         name = "p_review",
-        indexes = @Index(name = "idx_review_store_created", columnList = "store_id, created_at DESC")
+        indexes = {
+                @Index(name = "idx_review_store", columnList = "store_id"),
+                @Index(name = "idx_review_user", columnList = "customer_id")
+        }
 )
 @Getter
 @Builder
