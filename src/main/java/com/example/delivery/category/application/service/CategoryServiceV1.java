@@ -58,11 +58,13 @@ public class CategoryServiceV1 {
     }
 
     public ResGetCategoryDto getCategory(UUID categoryId) {
-        CategoryEntity category = categoryRepository.findById(categoryId)
-                .orElseThrow(CategoryNotFoundException::new);
-        return ResGetCategoryDto.from(category);
+        return ResGetCategoryDto.from(getCategoryEntity(categoryId));
     }
 
+    private CategoryEntity getCategoryEntity(UUID categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(CategoryNotFoundException::new);
+    }
 
     private void validateDuplicateCategoryName(String categoryName) {
         if (categoryRepository.findByName(categoryName).isPresent()) {
