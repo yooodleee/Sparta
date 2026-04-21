@@ -21,6 +21,9 @@ public record ReqUpdateMenuDto(
         @Min(value = 0, message = "가격은 0원 이상이어야 합니다.")
         Integer price,
 
+        @Schema(description = "이미지 URL")
+        String imageUrl,
+
         @Schema(description = "AI를 이용해 설명을 다시 생헝한 경우의 로그 ID")
         UUID aiRequestId) {
 }
