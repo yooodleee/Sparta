@@ -1,5 +1,6 @@
 package com.example.delivery.category.application.service;
 
+import com.example.delivery.category.application.exception.CategoryAlreadyDeletedException;
 import com.example.delivery.category.application.exception.CategoryAlreadyExistsException;
 import com.example.delivery.category.application.exception.CategoryNotFoundException;
 import com.example.delivery.category.domain.entity.CategoryEntity;
@@ -69,6 +70,24 @@ class CategoryServiceV1Test {
             ArgumentCaptor<CategoryEntity> captor = ArgumentCaptor.forClass(CategoryEntity.class);
             verify(categoryRepository).save(captor.capture());
             assertThat(captor.getValue().getName()).isEqualTo("한식");
+        }
+
+        @Test
+        @DisplayName("삭제된 카테고리 생성 시 실패")
+        void createCategory_fail_alreadyDeleted() throws Exception {
+            // given
+            CategoryEntity deleted = createCategoryEntity("한식");
+            setField(deleted, "deletedAt", LocalDateTime.of(2026, 1, 1, 12, 0));
+
+            ReqCreateCategoryDto request = new ReqCreateCategoryDto("한식");
+
+            given(categoryRepository.findByNameIncludingDeleted("한식")).willReturn(Optional.of(deleted));
+
+            // when & then
+            assertThatThrownBy(() -> categoryService.createCategory(request))
+                    .isInstanceOf(CategoryAlreadyDeletedException.class);
+
+            verify(categoryRepository, never()).save(any(CategoryEntity.class));
         }
 
         @Test
