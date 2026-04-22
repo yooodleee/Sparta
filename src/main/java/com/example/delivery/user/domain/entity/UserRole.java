@@ -15,4 +15,8 @@ public enum UserRole {
     public boolean isSignupAllowed() {
         return signupAllowed;
     }
+
+    public boolean isPrivileged() {
+        return this == MANAGER || this == MASTER;
+    }
 }

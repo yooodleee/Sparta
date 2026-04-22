@@ -93,7 +93,7 @@ public class UserEntity extends BaseEntity {
         if (actor.isSelf(this.username.value())) {
             throw new BusinessException(ErrorCode.CANNOT_DELETE_SELF);
         }
-        if (this.role == UserRole.MANAGER && !actor.isMaster()) {
+        if (this.role.isPrivileged() && !actor.isMaster()) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
         softDelete(actor.username());

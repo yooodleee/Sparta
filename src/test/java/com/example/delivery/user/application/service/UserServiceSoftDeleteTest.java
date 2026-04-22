@@ -43,6 +43,11 @@ class UserServiceSoftDeleteTest {
                 new Email("mo@example.com"), "hash", UserRole.MANAGER);
     }
 
+    UserEntity master() {
+        return UserEntity.register(new Username("root"), "Root",
+                new Email("root@example.com"), "hash", UserRole.MASTER);
+    }
+
     @Test
     @DisplayName("본인 자기 삭제는 400 CANNOT_DELETE_SELF")
     void selfDelete_blocked() {
@@ -87,6 +92,19 @@ class UserServiceSoftDeleteTest {
 
         assertThatCode(() -> userService.softDelete("alice", mgr)).doesNotThrowAnyException();
         assertThat(target.isDeleted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("MANAGER가 MASTER 삭제 시도 시 403")
+    void managerCannotDeleteMaster() {
+        UserEntity target = master();
+        given(userRepository.findByUsername("root")).willReturn(Optional.of(target));
+        LoginUser mgr = new LoginUser(UUID.randomUUID(), "mgr1", UserRole.MANAGER);
+
+        assertThatThrownBy(() -> userService.softDelete("root", mgr))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+        assertThat(target.isDeleted()).isFalse();
     }
 
     @Test
