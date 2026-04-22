@@ -33,7 +33,8 @@ public class SecurityConfig {
             "/actuator/health",
             "/actuator/info",
             "/error",
-            "/api/v1/test/users"
+            "/api/v1/test/users",
+            "/api/v1/auth/**"
     };
 
     private final JwtTokenProvider jwtTokenProvider;
