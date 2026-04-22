@@ -21,8 +21,8 @@ class PasswordPolicyTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "Ab1!",                // 너무 짧음
-            "Abcdefghij1!2345x",   // 16자 초과
+            "Abcd1!x",             // 7자 (하한 경계 - 1)
+            "Abcd1!23456789xy",    // 16자 (상한 경계 + 1)
             "abcdefg1!",           // 대문자 없음
             "ABCDEFG1!",           // 소문자 없음
             "Abcdefgh!",           // 숫자 없음
