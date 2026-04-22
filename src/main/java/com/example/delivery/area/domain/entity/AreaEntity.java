@@ -39,11 +39,11 @@ public class AreaEntity extends BaseEntity {
      * isActive: 운영 활성화 여부 (default = true)
      */
     @Builder
-    public AreaEntity(String name, String city, String district) {
+    public AreaEntity(String name, String city, String district, boolean isActive) {
         this.name = name;
         this.city = city;
         this.district = district;
-        this.isActive = true;
+        this.isActive = isActive;
     }
 
     /**
