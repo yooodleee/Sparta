@@ -23,6 +23,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -87,7 +88,7 @@ class UserAuthIntegrationTest {
 
         String token = login("cara01", "Abcd1234!");
 
-        saved.changeRole(UserRole.OWNER);
+        ReflectionTestUtils.setField(saved, "role", UserRole.OWNER);
         userRepository.save(saved);
 
         mockMvc.perform(get("/api/v1/users/cara01")

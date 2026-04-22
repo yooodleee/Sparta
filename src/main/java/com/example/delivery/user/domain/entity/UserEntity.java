@@ -1,6 +1,10 @@
 package com.example.delivery.user.domain.entity;
 
+import com.example.delivery.global.common.auth.LoginUser;
+import com.example.delivery.global.common.exception.BusinessException;
+import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.infrastructure.entity.BaseEntity;
+import com.example.delivery.user.domain.command.UserUpdateCommand;
 import com.example.delivery.user.domain.vo.Email;
 import com.example.delivery.user.domain.vo.EmailConverter;
 import com.example.delivery.user.domain.vo.Username;
@@ -68,38 +72,56 @@ public class UserEntity extends BaseEntity {
         return new UserEntity(username, nickname, email, passwordHash, role);
     }
 
-    public void updateBySelf(String nickname, Email email, String newPasswordHash, Boolean isPublic) {
-        if (nickname != null) {
-            this.nickname = nickname;
+    public void update(LoginUser actor, UserUpdateCommand command) {
+        requireUpdatableBy(actor);
+        boolean self = actor.isSelf(this.username.value());
+        if (command.newPasswordHash().isPresent() && !self) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
-        if (email != null) {
-            this.email = email;
-        }
-        if (newPasswordHash != null) {
-            this.passwordHash = newPasswordHash;
-        }
-        if (isPublic != null) {
-            this.isPublic = isPublic;
-        }
+        command.nickname().ifPresent(value -> this.nickname = value);
+        command.email().ifPresent(value -> this.email = value);
+        command.newPasswordHash().ifPresent(value -> this.passwordHash = value);
+        command.isPublic().ifPresent(value -> this.isPublic = value);
     }
 
-    public void updateByManager(String nickname, Email email, Boolean isPublic) {
-        if (nickname != null) {
-            this.nickname = nickname;
+    public void deleteBy(LoginUser actor) {
+        if (!actor.isManagerOrMaster()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
-        if (email != null) {
-            this.email = email;
+        if (actor.isSelf(this.username.value())) {
+            throw new BusinessException(ErrorCode.CANNOT_DELETE_SELF);
         }
-        if (isPublic != null) {
-            this.isPublic = isPublic;
+        if (this.role == UserRole.MANAGER && !actor.isMaster()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
+        softDelete(actor.username());
     }
 
-    public void changeRole(UserRole newRole) {
+    public void changeRoleBy(LoginUser actor, UserRole newRole) {
+        if (!actor.isMaster()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        if (actor.isSelf(this.username.value())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
         this.role = newRole;
     }
 
-    public boolean matchesPassword(String raw, PasswordEncoder encoder) {
-        return encoder.matches(raw, this.passwordHash);
+    public void assertReadableBy(LoginUser actor) {
+        if (!actor.isSelf(this.username.value()) && !actor.isManagerOrMaster()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+    }
+
+    public void verifyPassword(String raw, PasswordEncoder encoder) {
+        if (!encoder.matches(raw, this.passwordHash)) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+    }
+
+    private void requireUpdatableBy(LoginUser actor) {
+        if (!actor.isSelf(this.username.value()) && !actor.isManagerOrMaster()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
     }
 }

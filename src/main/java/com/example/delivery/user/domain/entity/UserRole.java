@@ -1,8 +1,18 @@
 package com.example.delivery.user.domain.entity;
 
 public enum UserRole {
-    CUSTOMER,
-    OWNER,
-    MANAGER,
-    MASTER
+    CUSTOMER(true),
+    OWNER(true),
+    MANAGER(false),
+    MASTER(false);
+
+    private final boolean signupAllowed;
+
+    UserRole(boolean signupAllowed) {
+        this.signupAllowed = signupAllowed;
+    }
+
+    public boolean isSignupAllowed() {
+        return signupAllowed;
+    }
 }

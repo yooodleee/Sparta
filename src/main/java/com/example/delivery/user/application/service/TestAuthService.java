@@ -38,8 +38,7 @@ public class TestAuthService {
                 passwordEncoder.encode(TEST_PASSWORD),
                 UserRole.MASTER));
 
-        String token = jwtTokenProvider.issue(
-                new LoginUser(saved.getId(), saved.getUsername().value(), saved.getRole()));
+        String token = jwtTokenProvider.issue(LoginUser.from(saved));
         return ResCreateTestUserDto.of(saved, token);
     }
 }

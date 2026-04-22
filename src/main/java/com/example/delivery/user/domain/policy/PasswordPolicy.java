@@ -13,7 +13,7 @@ public final class PasswordPolicy {
     }
 
     public static void validate(String raw) {
-        if (raw == null || !PATTERN.matcher(raw).matches()) {
+        if (!PATTERN.matcher(raw).matches()) {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD);
         }
     }

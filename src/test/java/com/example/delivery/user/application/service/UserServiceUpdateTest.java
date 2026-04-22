@@ -71,6 +71,7 @@ class UserServiceUpdateTest {
     @Test
     @DisplayName("MANAGER는 타인 수정 가능하나 password 수정 시도는 403")
     void manager_blockedFromPassword() {
+        given(passwordEncoder.encode("Abcd1234!")).willReturn("enc");
         ReqUpdateUser req = new ReqUpdateUser("x", null, "Abcd1234!", null);
         LoginUser me = new LoginUser(UUID.randomUUID(), "bob", UserRole.MANAGER);
 
