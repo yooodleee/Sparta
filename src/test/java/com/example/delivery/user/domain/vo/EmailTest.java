@@ -16,7 +16,14 @@ class EmailTest {
     @ValueSource(strings = {"a@b.co", "user.name+tag@example.com", "USER@domain.io"})
     @DisplayName("표준 형식 허용")
     void valid(String raw) {
-        assertThat(new Email(raw).value()).isEqualTo(raw);
+        assertThat(new Email(raw).value()).isEqualTo(raw.toLowerCase(java.util.Locale.ROOT));
+    }
+
+    @Test
+    @DisplayName("대소문자 혼합 이메일은 소문자로 정규화되어 저장")
+    void normalizesToLowerCase() {
+        Email email = new Email("User.Name@Example.COM");
+        assertThat(email.value()).isEqualTo("user.name@example.com");
     }
 
     @ParameterizedTest

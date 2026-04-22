@@ -2,6 +2,7 @@ package com.example.delivery.user.domain.vo;
 
 import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 public record Email(String value) {
@@ -13,5 +14,6 @@ public record Email(String value) {
         if (value == null || !PATTERN.matcher(value).matches()) {
             throw new BusinessException(ErrorCode.INVALID_EMAIL);
         }
+        value = value.toLowerCase(Locale.ROOT);
     }
 }

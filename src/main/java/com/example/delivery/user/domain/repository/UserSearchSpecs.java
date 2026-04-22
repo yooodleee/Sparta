@@ -5,6 +5,7 @@ import com.example.delivery.user.domain.entity.UserRole;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import org.springframework.data.jpa.domain.Specification;
 
 public final class UserSearchSpecs {
@@ -16,11 +17,11 @@ public final class UserSearchSpecs {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (keyword != null && !keyword.isBlank()) {
-                String like = "%" + keyword.toLowerCase() + "%";
+                String like = "%" + keyword.toLowerCase(Locale.ROOT) + "%";
                 predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("username")), like),
+                        cb.like(root.get("username"), like),
                         cb.like(cb.lower(root.get("nickname")), like),
-                        cb.like(cb.lower(root.get("email")), like)
+                        cb.like(root.get("email"), like)
                 ));
             }
             if (role != null) {
