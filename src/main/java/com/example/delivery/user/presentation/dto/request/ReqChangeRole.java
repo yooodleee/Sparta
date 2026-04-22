@@ -4,4 +4,5 @@ import com.example.delivery.user.domain.entity.UserRole;
 import jakarta.validation.constraints.NotNull;
 
 public record ReqChangeRole(@NotNull UserRole role) {
+
 }

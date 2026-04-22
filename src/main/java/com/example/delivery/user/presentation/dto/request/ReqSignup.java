@@ -12,4 +12,5 @@ public record ReqSignup(
         @NotBlank @Size(min = 8, max = 15) String password,
         @NotNull UserRole role
 ) {
+
 }

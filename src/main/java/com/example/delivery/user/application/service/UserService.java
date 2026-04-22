@@ -89,7 +89,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public PageResponse<ResUserDto> search(String keyword, UserRole role,
-                                           Pageable pageable, LoginUser me) {
+            Pageable pageable, LoginUser me) {
         if (!me.isManagerOrMaster()) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }

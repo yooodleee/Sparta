@@ -6,4 +6,5 @@ public record ReqLogin(
         @NotBlank String username,
         @NotBlank String password
 ) {
+
 }

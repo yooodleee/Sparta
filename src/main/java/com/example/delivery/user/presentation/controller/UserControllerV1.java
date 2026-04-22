@@ -43,28 +43,28 @@ public class UserControllerV1 {
 
     @GetMapping("/{username}")
     public ApiResponse<ResUserDto> getOne(@PathVariable String username,
-                                          @AuthenticationPrincipal UserPrincipal me) {
+            @AuthenticationPrincipal UserPrincipal me) {
         return ApiResponse.ok(userService.getOne(username, me.toLoginUser()));
     }
 
     @PatchMapping("/{username}")
     public ApiResponse<ResUserDto> update(@PathVariable String username,
-                                          @Valid @RequestBody ReqUpdateUser req,
-                                          @AuthenticationPrincipal UserPrincipal me) {
+            @Valid @RequestBody ReqUpdateUser req,
+            @AuthenticationPrincipal UserPrincipal me) {
         return ApiResponse.ok(userService.update(username, req, me.toLoginUser()));
     }
 
     @DeleteMapping("/{username}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void softDelete(@PathVariable String username,
-                           @AuthenticationPrincipal UserPrincipal me) {
+            @AuthenticationPrincipal UserPrincipal me) {
         userService.softDelete(username, me.toLoginUser());
     }
 
     @PatchMapping("/{username}/role")
     public ApiResponse<ResUserDto> changeRole(@PathVariable String username,
-                                              @Valid @RequestBody ReqChangeRole req,
-                                              @AuthenticationPrincipal UserPrincipal me) {
+            @Valid @RequestBody ReqChangeRole req,
+            @AuthenticationPrincipal UserPrincipal me) {
         return ApiResponse.ok(userService.changeRole(username, req, me.toLoginUser()));
     }
 }

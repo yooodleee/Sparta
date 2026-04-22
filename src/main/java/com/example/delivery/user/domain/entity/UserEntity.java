@@ -54,7 +54,7 @@ public class UserEntity extends BaseEntity {
     private boolean isPublic;
 
     private UserEntity(Username username, String nickname, Email email,
-                       String passwordHash, UserRole role) {
+            String passwordHash, UserRole role) {
         this.username = username;
         this.nickname = nickname;
         this.email = email;
@@ -64,7 +64,7 @@ public class UserEntity extends BaseEntity {
     }
 
     public static UserEntity register(Username username, String nickname, Email email,
-                                      String passwordHash, UserRole role) {
+            String passwordHash, UserRole role) {
         return new UserEntity(username, nickname, email, passwordHash, role);
     }
 

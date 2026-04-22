@@ -11,6 +11,7 @@ import com.example.delivery.review.presentation.dto.response.ResReviewDto;
 import com.example.delivery.user.domain.entity.UserRole;
 import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
+import com.example.delivery.user.domain.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +56,7 @@ class ReviewControllerTest {
     @MockBean JwtTokenProvider jwtTokenProvider;
     @MockBean RestAuthenticationEntryPoint authenticationEntryPoint;
     @MockBean RestAccessDeniedHandler accessDeniedHandler;
-    @MockBean com.example.delivery.user.domain.repository.UserRepository userRepository;
+    @MockBean UserRepository userRepository;
 
     private static final UUID ORDER_ID    = UUID.randomUUID();
     private static final UUID STORE_ID    = UUID.randomUUID();

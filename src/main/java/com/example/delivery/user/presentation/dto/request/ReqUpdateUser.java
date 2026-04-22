@@ -8,4 +8,5 @@ public record ReqUpdateUser(
         @Size(min = 8, max = 15) String password,
         Boolean isPublic
 ) {
+
 }

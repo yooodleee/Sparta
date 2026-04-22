@@ -7,4 +7,5 @@ public record ResLogin(
         String username,
         UserRole role
 ) {
+
 }

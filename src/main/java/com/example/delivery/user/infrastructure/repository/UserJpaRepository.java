@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface UserJpaRepository
         extends JpaRepository<UserEntity, UUID>,
-                JpaSpecificationExecutor<UserEntity> {
+        JpaSpecificationExecutor<UserEntity> {
 
     @Query("select u from UserEntity u where u.username = :username")
     Optional<UserEntity> findByUsername(Username username);
@@ -21,10 +21,10 @@ public interface UserJpaRepository
     boolean existsByEmail(Email email);
 
     @Query("""
-           select case when count(u) > 0 then true else false end
-           from UserEntity u
-           where u.email = :email
-             and u.username <> :excludeUsername
-           """)
+            select case when count(u) > 0 then true else false end
+            from UserEntity u
+            where u.email = :email
+              and u.username <> :excludeUsername
+            """)
     boolean existsByEmailExcept(Email email, Username excludeUsername);
 }

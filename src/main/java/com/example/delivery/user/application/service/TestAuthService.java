@@ -15,9 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 테스트 전용 서비스.
- * JWT 보호 엔드포인트 동작 검증을 위해 파라미터 없이 임시 사용자 + 토큰을 발급한다.
- * 실제 회원가입/로그인 플로우가 붙으면 이 클래스와 관련 컨트롤러/DTO는 제거한다.
+ * 테스트 전용 서비스. JWT 보호 엔드포인트 동작 검증을 위해 파라미터 없이 임시 사용자 + 토큰을 발급한다. 실제 회원가입/로그인 플로우가 붙으면 이 클래스와 관련 컨트롤러/DTO는 제거한다.
  */
 @Service
 @RequiredArgsConstructor
