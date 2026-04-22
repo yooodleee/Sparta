@@ -82,6 +82,8 @@
 
 수정 가능 필드(본인): nickname, email, password, is_public / MANAGER·MASTER는 password 제외 / role은 MASTER 전용
 
+> 상세 조회(`GET /{username}`)는 **본인/MANAGER/MASTER 전용**이며, `is_public`은 현재 조회 범위를 제어하지 않는다. 저장·수정만 허용되는 예약 필드로, 향후 공개 프로필 엔드포인트 도입 시 활용한다.
+
 ### 2.3 Area `/api/v1/areas`
 
 | Method | Path        | 설명           | 권한             |

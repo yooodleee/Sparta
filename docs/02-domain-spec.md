@@ -8,7 +8,7 @@
 
 | 도메인          | 설명        | PK                        |
 |--------------|-----------|---------------------------|
-| User         | 사용자/계정    | `username` (VARCHAR) — 예외 |
+| User         | 사용자/계정    | UUID (`username`은 UNIQUE) |
 | Area         | 운영 지역     | UUID                      |
 | Category     | 음식점 분류    | UUID                      |
 | Store        | 가게        | UUID                      |
