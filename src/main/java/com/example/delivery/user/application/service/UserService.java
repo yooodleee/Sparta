@@ -5,6 +5,7 @@ import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.common.exception.ResourceNotFoundException;
 import com.example.delivery.user.domain.entity.UserEntity;
+import com.example.delivery.user.domain.entity.UserRole;
 import com.example.delivery.user.domain.policy.PasswordPolicy;
 import com.example.delivery.user.domain.repository.UserRepository;
 import com.example.delivery.user.domain.vo.Email;
@@ -54,5 +55,21 @@ public class UserService {
             user.updateByManager(req.nickname(), newEmail, req.isPublic());
         }
         return ResUserDto.from(user);
+    }
+
+    @Transactional
+    public void softDelete(String username, LoginUser me) {
+        UserEntity user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
+        if (!me.isManagerOrMaster()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        if (me.isSelf(username)) {
+            throw new BusinessException(ErrorCode.CANNOT_DELETE_SELF);
+        }
+        if (user.getRole() == UserRole.MANAGER && !me.isMaster()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        user.softDelete(me.username());
     }
 }
