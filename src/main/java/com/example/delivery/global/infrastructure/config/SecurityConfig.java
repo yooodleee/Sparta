@@ -4,6 +4,8 @@ import com.example.delivery.global.infrastructure.security.JwtAuthenticationFilt
 import com.example.delivery.global.infrastructure.security.JwtTokenProvider;
 import com.example.delivery.global.infrastructure.security.RestAccessDeniedHandler;
 import com.example.delivery.global.infrastructure.security.RestAuthenticationEntryPoint;
+import com.example.delivery.user.domain.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -40,6 +42,8 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final RestAccessDeniedHandler accessDeniedHandler;
+    private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -62,7 +66,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/reviews/*").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtTokenProvider),
+                        new JwtAuthenticationFilter(jwtTokenProvider, userRepository, objectMapper),
                         UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

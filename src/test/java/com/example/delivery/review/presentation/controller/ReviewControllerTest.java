@@ -55,6 +55,7 @@ class ReviewControllerTest {
     @MockBean JwtTokenProvider jwtTokenProvider;
     @MockBean RestAuthenticationEntryPoint authenticationEntryPoint;
     @MockBean RestAccessDeniedHandler accessDeniedHandler;
+    @MockBean com.example.delivery.user.domain.repository.UserRepository userRepository;
 
     private static final UUID ORDER_ID    = UUID.randomUUID();
     private static final UUID STORE_ID    = UUID.randomUUID();
