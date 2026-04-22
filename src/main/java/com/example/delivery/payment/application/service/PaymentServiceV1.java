@@ -2,7 +2,7 @@ package com.example.delivery.payment.application.service;
 
 import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
-import com.example.delivery.order.infrastructure.repository.OrderRepository;
+import com.example.delivery.order.domain.repository.OrderRepository;
 import com.example.delivery.payment.domain.entity.PaymentEntity;
 import com.example.delivery.payment.domain.entity.PaymentStatus;
 import com.example.delivery.payment.domain.repository.PaymentRepository;

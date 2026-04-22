@@ -6,6 +6,7 @@ import com.example.delivery.global.common.response.ApiResponse;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -21,7 +22,7 @@ public class GlobalExceptionHandler {
         log.warn("BusinessException: {} - {}", code.name(), e.getMessage());
         return ResponseEntity
                 .status(code.getStatus())
-                .body(ApiResponse.error(code.code(), code.name()));
+                .body(ApiResponse.error(code.code(), code.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -32,6 +33,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.VALIDATION_ERROR.getStatus())
                 .body(ApiResponse.validationError(ErrorCode.VALIDATION_ERROR.name(), errors));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException e) {
+        ErrorCode code = ErrorCode.FORBIDDEN;
+        log.warn("AccessDeniedException: {} - {}", code.name(), e.getMessage());
+        return ResponseEntity
+                .status(code.getStatus())
+                .body(ApiResponse.error(code.code(), code.getMessage()));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

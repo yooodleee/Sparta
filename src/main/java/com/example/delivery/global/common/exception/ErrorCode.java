@@ -16,9 +16,17 @@ public enum ErrorCode {
     // Auth
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
+    ROLE_MISMATCH(HttpStatus.FORBIDDEN, "토큰의 권한이 현재 권한과 일치하지 않습니다."),
+    SIGNUP_ROLE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "회원가입으로 부여할 수 없는 권한입니다."),
 
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
+    INVALID_USERNAME(HttpStatus.BAD_REQUEST, "아이디는 소문자/숫자 4~10자여야 합니다."),
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호는 8~15자, 대/소문자·숫자·특수문자를 각 1자 이상 포함해야 합니다."),
+    INVALID_EMAIL(HttpStatus.BAD_REQUEST, "이메일 형식이 올바르지 않습니다."),
+    DUPLICATE_USERNAME(HttpStatus.CONFLICT, "이미 사용 중인 아이디입니다."),
+    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
+    CANNOT_DELETE_SELF(HttpStatus.BAD_REQUEST, "자기 자신은 삭제할 수 없습니다."),
 
     //Menu
     MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다."),
@@ -43,7 +51,13 @@ public enum ErrorCode {
     // Review
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
     DUPLICATE_REVIEW(HttpStatus.CONFLICT, "이미 해당 주문에 리뷰를 작성했습니다."),
-    ORDER_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "완료된 주문에만 리뷰를 작성할 수 있습니다.");
+    ORDER_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "완료된 주문에만 리뷰를 작성할 수 있습니다."),
+
+    // Category
+    CATEGORY_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 존재하는 카테고리 이름입니다."),
+    CATEGORY_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "삭제된 카테고리 이름입니다."),
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "카테고리를 찾을 수 없습니다.");
+
 
     private final HttpStatus status;
     private final String message;
