@@ -12,21 +12,19 @@ import com.example.delivery.category.presentation.dto.response.ResGetCategoryDto
 import com.example.delivery.global.common.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Set;
 import java.util.UUID;
+
+import static com.example.delivery.global.common.pageable.PageableUtils.createPageable;
+import static com.example.delivery.global.common.pageable.PageableUtils.hasKeyword;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CategoryServiceV1 {
-
-    private static final Set<Integer> ALLOWED_PAGE_SIZES = Set.of(10, 30, 50);
 
     private final CategoryRepository categoryRepository;
 
@@ -100,20 +98,5 @@ public class CategoryServiceV1 {
         if (categoryRepository.findByName(categoryName).isPresent()) {
             throw new CategoryAlreadyExistsException();
         }
-    }
-
-    private Pageable createPageable(int page, int size) {
-        int validatedSize = ALLOWED_PAGE_SIZES.contains(size) ? size : 10;
-        int validatedPage = Math.max(page, 0);
-
-        return PageRequest.of(
-                validatedPage,
-                validatedSize,
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
-    }
-
-    private boolean hasKeyword(String keyword) {
-        return keyword != null && !keyword.trim().isEmpty();
     }
 }
