@@ -4,14 +4,18 @@ import com.example.delivery.global.common.auth.LoginUser;
 import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.common.exception.ResourceNotFoundException;
+import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.user.domain.entity.UserEntity;
 import com.example.delivery.user.domain.entity.UserRole;
 import com.example.delivery.user.domain.policy.PasswordPolicy;
 import com.example.delivery.user.domain.repository.UserRepository;
 import com.example.delivery.user.domain.vo.Email;
+import com.example.delivery.user.presentation.dto.request.ReqChangeRole;
 import com.example.delivery.user.presentation.dto.request.ReqUpdateUser;
 import com.example.delivery.user.presentation.dto.response.ResUserDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,5 +75,37 @@ public class UserService {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
         user.softDelete(me.username());
+    }
+
+    @Transactional(readOnly = true)
+    public ResUserDto getOne(String username, LoginUser me) {
+        UserEntity user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
+        if (!me.isSelf(username) && !me.isManagerOrMaster()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        return ResUserDto.from(user);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<ResUserDto> search(String keyword, UserRole role,
+                                           Pageable pageable, LoginUser me) {
+        if (!me.isManagerOrMaster()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        Page<ResUserDto> page = userRepository.search(keyword, role, pageable)
+                .map(ResUserDto::from);
+        return PageResponse.from(page);
+    }
+
+    @Transactional
+    public ResUserDto changeRole(String username, ReqChangeRole req, LoginUser me) {
+        if (!me.isMaster()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        UserEntity user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
+        user.changeRole(req.role());
+        return ResUserDto.from(user);
     }
 }
