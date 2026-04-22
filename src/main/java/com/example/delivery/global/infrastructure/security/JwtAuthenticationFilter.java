@@ -55,18 +55,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        Optional<UserEntity> found;
-        try {
-            found = userRepository.findByUsername(claimsPrincipal.username());
-        } catch (BusinessException ex) {
+        Optional<UserEntity> lookup = findAuthenticatedUser(claimsPrincipal.username());
+        if (lookup.isEmpty()) {
             writeError(response, HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
             return;
         }
-        if (found.isEmpty()) {
-            writeError(response, HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
-            return;
-        }
-        UserEntity user = found.get();
+        UserEntity user = lookup.get();
         if (user.getRole() != claimsPrincipal.role()) {
             writeError(response, HttpStatus.FORBIDDEN, ErrorCode.ROLE_MISMATCH);
             return;
@@ -81,6 +75,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         filterChain.doFilter(request, response);
+    }
+
+    private Optional<UserEntity> findAuthenticatedUser(String username) {
+        try {
+            return userRepository.findByUsername(username);
+        } catch (BusinessException ex) {
+            return Optional.empty();
+        }
     }
 
     private void writeError(HttpServletResponse response, HttpStatus status, ErrorCode code)
