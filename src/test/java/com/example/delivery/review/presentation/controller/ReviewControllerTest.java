@@ -56,12 +56,14 @@ class ReviewControllerTest {
     @MockBean RestAuthenticationEntryPoint authenticationEntryPoint;
     @MockBean RestAccessDeniedHandler accessDeniedHandler;
 
-    private static final UUID ORDER_ID  = UUID.randomUUID();
-    private static final UUID STORE_ID  = UUID.randomUUID();
-    private static final UUID REVIEW_ID = UUID.randomUUID();
+    private static final UUID ORDER_ID    = UUID.randomUUID();
+    private static final UUID STORE_ID    = UUID.randomUUID();
+    private static final UUID REVIEW_ID   = UUID.randomUUID();
+    private static final UUID CUSTOMER_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final UUID MASTER_ID   = UUID.fromString("00000000-0000-0000-0000-000000000002");
 
     private final UserPrincipal principal =
-            new UserPrincipal(1L, "testuser", UserRole.CUSTOMER);
+            new UserPrincipal(CUSTOMER_ID, "testuser", UserRole.CUSTOMER);
 
     @BeforeEach
     void setupSecurityHandlers() throws Exception {
@@ -291,7 +293,7 @@ class ReviewControllerTest {
     @Test
     @DisplayName("리뷰 삭제 - 성공: MASTER 권한으로 타인 리뷰 삭제")
     void deleteReview_masterCanDeleteAny() throws Exception {
-        UserPrincipal masterPrincipal = new UserPrincipal(2L, "master", UserRole.MASTER);
+        UserPrincipal masterPrincipal = new UserPrincipal(MASTER_ID, "master", UserRole.MASTER);
         willDoNothing().given(reviewService).deleteReview(eq(REVIEW_ID), any());
 
         mockMvc.perform(delete("/api/v1/reviews/{reviewId}", REVIEW_ID)

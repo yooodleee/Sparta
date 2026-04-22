@@ -1,10 +1,12 @@
 package com.example.delivery.global.infrastructure.security;
 
+import com.example.delivery.global.common.auth.LoginUser;
 import com.example.delivery.user.domain.entity.UserRole;
+import java.util.UUID;
 import org.springframework.security.core.AuthenticatedPrincipal;
 
 public record UserPrincipal(
-        Long id,
+        UUID id,
         String username,
         UserRole role
 ) implements AuthenticatedPrincipal {
@@ -16,5 +18,9 @@ public record UserPrincipal(
 
     public String authority() {
         return "ROLE_" + role.name();
+    }
+
+    public LoginUser toLoginUser() {
+        return new LoginUser(id, username, role);
     }
 }

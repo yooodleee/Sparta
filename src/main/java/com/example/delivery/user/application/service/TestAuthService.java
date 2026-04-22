@@ -1,7 +1,7 @@
 package com.example.delivery.user.application.service;
 
+import com.example.delivery.global.common.auth.LoginUser;
 import com.example.delivery.global.infrastructure.security.JwtTokenProvider;
-import com.example.delivery.global.infrastructure.security.UserPrincipal;
 import com.example.delivery.user.domain.entity.UserEntity;
 import com.example.delivery.user.domain.entity.UserRole;
 import com.example.delivery.user.domain.repository.UserRepository;
@@ -35,7 +35,7 @@ public class TestAuthService {
                 .build());
 
         String token = jwtTokenProvider.issue(
-                new UserPrincipal(saved.getId(), saved.getUsername(), saved.getRole()));
+                new LoginUser(saved.getId(), saved.getUsername(), saved.getRole()));
         return ResCreateTestUserDto.of(saved, token);
     }
 }
