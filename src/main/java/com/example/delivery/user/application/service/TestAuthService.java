@@ -5,9 +5,12 @@ import com.example.delivery.global.infrastructure.security.JwtTokenProvider;
 import com.example.delivery.user.domain.entity.UserEntity;
 import com.example.delivery.user.domain.entity.UserRole;
 import com.example.delivery.user.domain.repository.UserRepository;
+import com.example.delivery.user.domain.vo.Email;
+import com.example.delivery.user.domain.vo.Username;
 import com.example.delivery.user.presentation.dto.response.ResCreateTestUserDto;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,22 +23,25 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TestAuthService {
 
+    private static final String TEST_PASSWORD = "Test1234!";
+
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public ResCreateTestUserDto createDefaultAndIssueToken() {
         String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-        String username = "t" + suffix;
-        UserEntity saved = userRepository.save(UserEntity.builder()
-                .username(username)
-                .nickname("테스트" + suffix)
-                .email(username + "@test.local")
-                .role(UserRole.MASTER)
-                .build());
+        String rawUsername = "t" + suffix;
+        UserEntity saved = userRepository.save(UserEntity.register(
+                new Username(rawUsername),
+                "테스트" + suffix,
+                new Email(rawUsername + "@test.local"),
+                passwordEncoder.encode(TEST_PASSWORD),
+                UserRole.MASTER));
 
         String token = jwtTokenProvider.issue(
-                new LoginUser(saved.getId(), saved.getUsername(), saved.getRole()));
+                new LoginUser(saved.getId(), saved.getUsername().value(), saved.getRole()));
         return ResCreateTestUserDto.of(saved, token);
     }
 }

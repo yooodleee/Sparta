@@ -19,9 +19,9 @@ public record ResCreateTestUserDto(
     public static ResCreateTestUserDto of(UserEntity user, String token) {
         return new ResCreateTestUserDto(
                 user.getId(),
-                user.getUsername(),
+                user.getUsername().value(),
                 user.getNickname(),
-                user.getEmail(),
+                user.getEmail().value(),
                 user.getRole(),
                 token);
     }
