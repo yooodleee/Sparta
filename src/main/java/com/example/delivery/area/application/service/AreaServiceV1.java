@@ -6,6 +6,7 @@ import com.example.delivery.area.application.exception.AreaNotFoundException;
 import com.example.delivery.area.domain.entity.AreaEntity;
 import com.example.delivery.area.domain.repository.AreaRepository;
 import com.example.delivery.area.presentation.dto.request.ReqCreateAreaDto;
+import com.example.delivery.area.presentation.dto.request.ReqUpdateAreaDto;
 import com.example.delivery.area.presentation.dto.response.ResCreateAreaDto;
 import com.example.delivery.area.presentation.dto.response.ResGetAreaDto;
 import com.example.delivery.global.common.response.PageResponse;
@@ -63,6 +64,31 @@ public class AreaServiceV1 {
 
     public ResGetAreaDto getArea(UUID areaId) {
         return ResGetAreaDto.from(getAreaEntity(areaId));
+    }
+
+    @Transactional
+    public ResGetAreaDto updateArea(UUID areaId, ReqUpdateAreaDto request) {
+
+        AreaEntity area = getAreaEntity(areaId);
+
+        String newName = request.name().trim();
+        String city = request.city().trim();
+        String district = request.district().trim();
+        boolean isActive = request.isActive();
+
+        if (!area.getName().equals(newName)) {
+            validateDuplicateAreaName(newName);
+        }
+
+        area.update(newName, city, district, isActive);
+
+        return ResGetAreaDto.from(area);
+    }
+
+    @Transactional
+    public void deleteArea(UUID areaId, String deletedBy) {
+        AreaEntity area = getAreaEntity(areaId);
+        area.softDelete(deletedBy);
     }
 
     private AreaEntity getAreaEntity(UUID areaId) {

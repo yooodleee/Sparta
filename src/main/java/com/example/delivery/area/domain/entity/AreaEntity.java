@@ -52,4 +52,11 @@ public class AreaEntity extends BaseEntity {
     public void toggleActive() {
         this.isActive = !this.isActive;
     }
+
+    public void update(String newName, String city, String district, boolean isActive) {
+        this.name = newName;
+        this.city = city;
+        this.district = district;
+        this.isActive = isActive;
+    }
 }
