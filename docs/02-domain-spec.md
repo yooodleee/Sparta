@@ -71,7 +71,8 @@ PENDING → ACCEPTED → COOKING → DELIVERING → DELIVERED → COMPLETED
 | 주문 상태 변경      | ❌                   | ✅(본인 가게) | ✅       | ✅      |
 | 주문 취소(5분 내)   | ✅(본인)               | ❌        | ❌       | ✅      |
 | 리뷰 작성         | ✅(본인 주문, COMPLETED) | ❌        | ❌       | ❌      |
-| 사용자 관리        | ❌                   | ❌        | ✅       | ✅      |
+| 사용자 관리(대상 CUSTOMER·OWNER) | ❌    | ❌        | ✅       | ✅      |
+| 사용자 관리(대상 MANAGER·MASTER) | ❌    | ❌        | ❌(본인 제외) | ✅(본인 role 변경 제외) |
 | MANAGER 생성/삭제 | ❌                   | ❌        | ❌       | ✅      |
 | 카테고리/지역 관리    | ❌                   | ❌        | ✅       | ✅      |
 

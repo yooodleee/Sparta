@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 
 import com.example.delivery.global.common.auth.LoginUser;
@@ -47,7 +48,7 @@ class UserServiceUpdateTest {
                 new Email("alice@example.com"),
                 "hash",
                 UserRole.CUSTOMER);
-        given(userRepository.findByUsername("alice")).willReturn(Optional.of(target));
+        lenient().when(userRepository.findByUsername("alice")).thenReturn(Optional.of(target));
     }
 
     @Test
@@ -78,6 +79,53 @@ class UserServiceUpdateTest {
         assertThatThrownBy(() -> userService.update("alice", req, me))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("MANAGER가 다른 MANAGER 수정 시도 시 403")
+    void manager_cannotUpdateOtherManager() {
+        UserEntity manager = UserEntity.register(
+                new Username("momo"), "Mo",
+                new Email("mo@example.com"), "hash", UserRole.MANAGER);
+        given(userRepository.findByUsername("momo")).willReturn(Optional.of(manager));
+
+        ReqUpdateUser req = new ReqUpdateUser("x", null, null, null);
+        LoginUser other = new LoginUser(UUID.randomUUID(), "mgr2", UserRole.MANAGER);
+
+        assertThatThrownBy(() -> userService.update("momo", req, other))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("MANAGER가 MASTER 수정 시도 시 403")
+    void manager_cannotUpdateMaster() {
+        UserEntity master = UserEntity.register(
+                new Username("root"), "Root",
+                new Email("root@example.com"), "hash", UserRole.MASTER);
+        given(userRepository.findByUsername("root")).willReturn(Optional.of(master));
+
+        ReqUpdateUser req = new ReqUpdateUser("x", null, null, null);
+        LoginUser mgr = new LoginUser(UUID.randomUUID(), "mgr1", UserRole.MANAGER);
+
+        assertThatThrownBy(() -> userService.update("root", req, mgr))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("MASTER는 MANAGER 수정 가능")
+    void master_canUpdateManager() {
+        UserEntity manager = UserEntity.register(
+                new Username("momo"), "Mo",
+                new Email("mo@example.com"), "hash", UserRole.MANAGER);
+        given(userRepository.findByUsername("momo")).willReturn(Optional.of(manager));
+
+        ReqUpdateUser req = new ReqUpdateUser("x", null, null, null);
+        LoginUser master = new LoginUser(UUID.randomUUID(), "root", UserRole.MASTER);
+
+        assertThatCode(() -> userService.update("momo", req, master)).doesNotThrowAnyException();
+        assertThat(manager.getNickname()).isEqualTo("x");
     }
 
     @Test

@@ -82,7 +82,9 @@
 
 수정 가능 필드(본인): nickname, email, password, is_public / MANAGER·MASTER는 password 제외 / role은 MASTER 전용
 
-> 상세 조회(`GET /{username}`)는 **본인/MANAGER/MASTER 전용**이며, `is_public`은 현재 조회 범위를 제어하지 않는다. 저장·수정만 허용되는 예약 필드로, 향후 공개 프로필 엔드포인트 도입 시 활용한다.
+> **Privileged 대상 예외 규칙**: 대상 계정 role이 `MANAGER` 또는 `MASTER`인 경우, 위 표에서 `MANAGER/MASTER`에 해당하던 권한은 **본인 또는 MASTER만** 허용된다. 즉 MANAGER끼리는 서로 **조회/수정/삭제/role 변경이 모두 불가**하며, privileged 계정의 CUD는 사실상 MASTER 전용이다. (role 변경은 본 규칙과 무관하게 항상 MASTER 전용이고 본인 변경은 항상 금지.)
+
+> 상세 조회(`GET /{username}`)는 위 권한 규칙을 따르며, `is_public`은 현재 조회 범위를 제어하지 않는다. 저장·수정만 허용되는 예약 필드로, 향후 공개 프로필 엔드포인트 도입 시 활용한다.
 
 ### 2.3 Area `/api/v1/areas`
 
