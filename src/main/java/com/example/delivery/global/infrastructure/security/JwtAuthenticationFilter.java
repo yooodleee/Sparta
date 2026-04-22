@@ -1,5 +1,6 @@
 package com.example.delivery.global.infrastructure.security;
 
+import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.user.domain.entity.UserEntity;
@@ -54,7 +55,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        Optional<UserEntity> found = userRepository.findByUsername(claimsPrincipal.username());
+        Optional<UserEntity> found;
+        try {
+            found = userRepository.findByUsername(claimsPrincipal.username());
+        } catch (BusinessException ex) {
+            writeError(response, HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+            return;
+        }
         if (found.isEmpty()) {
             writeError(response, HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
             return;
@@ -84,7 +91,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.setCharacterEncoding("UTF-8");
         objectMapper.writeValue(
                 response.getWriter(),
-                ApiResponse.error(status.value(), code.getMessage()));
+                ApiResponse.error(status.value(), code.name()));
     }
 
     private String resolveToken(HttpServletRequest request) {
