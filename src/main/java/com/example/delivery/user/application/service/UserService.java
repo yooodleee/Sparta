@@ -103,6 +103,10 @@ public class UserService {
         if (!me.isMaster()) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
+        // MASTER가 자기 자신의 권한을 변경하면 시스템이 MASTER 없이 남을 수 있으므로 차단한다.
+        if (me.isSelf(username)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
         UserEntity user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
         user.changeRole(req.role());

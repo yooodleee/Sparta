@@ -21,10 +21,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceUpdateTest {
@@ -56,6 +58,12 @@ class UserServiceUpdateTest {
         LoginUser me = new LoginUser(UUID.randomUUID(), "alice", UserRole.CUSTOMER);
 
         assertThatCode(() -> userService.update("alice", req, me)).doesNotThrowAnyException();
+
+        assertThat(target.getNickname()).isEqualTo("NewNick");
+        assertThat(target.getEmail().value()).isEqualTo("new@mail.co");
+        assertThat(target.getPasswordHash()).isEqualTo("new-hash");
+        assertThat(target.isPublic()).isFalse();
+        verify(passwordEncoder).encode("Abcd1234!");
     }
 
     @Test
