@@ -3,21 +3,24 @@ package com.example.delivery.menu.presentation.controller;
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.menu.application.service.MenuServiceV1;
 import com.example.delivery.menu.presentation.dto.request.ReqCreateMenuDto;
+import com.example.delivery.menu.presentation.dto.request.ReqUpdateMenuDto;
 import com.example.delivery.menu.presentation.dto.response.ResMenuDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Scanner;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-@Tag(name = "Menu API", description = "메뉴 도메인 관련 API (생성 및 조회)")
+@Tag(name = "Menu API", description = "메뉴 도메인 관련 API")
 public class MenuControllerV1 {
 
     private final MenuServiceV1 menuService;
@@ -30,7 +33,7 @@ public class MenuControllerV1 {
 
         ResMenuDto response = menuService.createMenu(storeId, request);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
     }
 
     @GetMapping("/stores/{storeId}/menus")
@@ -41,7 +44,7 @@ public class MenuControllerV1 {
 
         List<ResMenuDto> response = menuService.getVisibleMenus(storeId, keyword);
 
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     @GetMapping("/menus/{menuId}")
@@ -51,6 +54,46 @@ public class MenuControllerV1 {
 
         ResMenuDto response = menuService.getMenu(menuId);
 
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @PatchMapping("/menus/{menuId}")
+    @Operation(summary = "메뉴 수정", description = "메뉴의 이름, 설명, 가격, 이미지를 수정합니다.")
+    public ResponseEntity<ApiResponse<ResMenuDto>> updateMenu(
+            @PathVariable UUID menuId,
+            @RequestBody ReqUpdateMenuDto request){
+
+        ResMenuDto response = menuService.updateMenu(menuId, request);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    //메뉴 품절 상태 토글
+    @PatchMapping("/menus/{menuId}/sold-out")
+    @Operation(summary = "메뉴 품절 토글", description = "메뉴의 품절 상태를 변경합니다.")
+    public ResponseEntity<ApiResponse<ResMenuDto>> toggleSoldOut(
+            @PathVariable UUID menuId){
+
+        ResMenuDto response = menuService.toggleSoldOut(menuId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @PatchMapping("/menus/{menuId}/visibility")
+    @Operation(summary = "메뉴 숨김 상태 변경", description = "메뉴를 숨기거나 다시 노출시킵니다.(T/F)")
+    public ResponseEntity<ApiResponse<ResMenuDto>> updateVisibility(
+            @PathVariable UUID menuId,
+            @RequestParam boolean isHidden){
+
+        ResMenuDto response = menuService.updateVisibility(menuId, isHidden);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @DeleteMapping("/menus/{menuId}")
+    @Operation(summary = "메뉴 삭제", description = "메뉴를 삭제합니다. (soft delete)")
+    public ResponseEntity<ApiResponse<Void>> deleteMenu(
+            @PathVariable UUID menuId){
+
+        menuService.deleteMenu(menuId);
+
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

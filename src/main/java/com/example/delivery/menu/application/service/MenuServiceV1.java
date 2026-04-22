@@ -7,11 +7,13 @@ import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.menu.domain.entity.MenuEntity;
 import com.example.delivery.menu.domain.repository.MenuRepository;
 import com.example.delivery.menu.presentation.dto.request.ReqCreateMenuDto;
+import com.example.delivery.menu.presentation.dto.request.ReqUpdateMenuDto;
 import com.example.delivery.menu.presentation.dto.response.ResMenuDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.awt.*;
 import java.util.List;
 import java.util.UUID;
 
@@ -77,6 +79,63 @@ public class MenuServiceV1 {
         MenuEntity menu = menuRepository.findById(menuId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
         return ResMenuDto.from(menu);
+    }
+
+    @Transactional
+    public ResMenuDto updateMenu(UUID menuId, ReqUpdateMenuDto reqDto){
+        //메뉴 조회
+        MenuEntity menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
+
+        //AI 설명 갱신 여부 확인
+        boolean isAiDescription = reqDto.aiRequestId() != null;
+
+        //엔티티 수정
+        menu.updateProduct(
+                reqDto.name(),
+                reqDto.description(),
+                reqDto.price(),
+                isAiDescription,
+                reqDto.imageUrl()
+        );
+
+        //AI 설명이 새로 생성된 경우, 로그와 매핑
+        if(isAiDescription){
+            AiRequestLogEntity aiLog = aiRequestLogRepository.findById(reqDto.aiRequestId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.AI_LOG_NOT_FOUND));
+            aiLog.assignToMenu(menu.getId());
+        }
+        return  ResMenuDto.from(menu);
+    }
+
+    //품절 상태 토글
+    @Transactional
+    public ResMenuDto toggleSoldOut(UUID menuId){
+        MenuEntity menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
+
+        menu.toggleSoldOut();
+
+        return ResMenuDto.from(menu);
+    }
+
+    @Transactional
+    public ResMenuDto updateVisibility(UUID menuId, boolean isHidden){
+        MenuEntity menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
+
+        menu.updateVisibility(isHidden);
+
+        return ResMenuDto.from(menu);
+    }
+
+    @Transactional
+    public void deleteMenu(UUID menuId){
+        MenuEntity menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
+        // 인증/인가 적용 후 SecurityContext에서 현재 로그인한 사용자 정보를 가져와야 함
+        // 현재는 임시 문자열 "system" 삽입
+        menu.delete("system");
     }
 
 }
