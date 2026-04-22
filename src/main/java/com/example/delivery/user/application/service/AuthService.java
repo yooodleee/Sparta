@@ -53,7 +53,7 @@ public class AuthService {
         user.verifyPassword(req.password(), passwordEncoder);
         String token = jwtTokenProvider.issue(LoginUser.from(user));
 
-        return new ResLogin(token, user.getUsername().value(), user.getRole());
+        return ResLogin.of(token, user);
     }
 
     private void requireUsernameAvailable(Username username) {

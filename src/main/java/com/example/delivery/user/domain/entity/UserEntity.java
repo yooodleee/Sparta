@@ -73,8 +73,10 @@ public class UserEntity extends BaseEntity {
     }
 
     public void update(LoginUser actor, UserUpdateCommand command) {
-        requireUpdatableBy(actor);
         boolean self = actor.isSelf(this.username.value());
+        if (!self && !actor.isManagerOrMaster()) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
         if (command.newPasswordHash().isPresent() && !self) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
@@ -116,12 +118,6 @@ public class UserEntity extends BaseEntity {
     public void verifyPassword(String raw, PasswordEncoder encoder) {
         if (!encoder.matches(raw, this.passwordHash)) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-    }
-
-    private void requireUpdatableBy(LoginUser actor) {
-        if (!actor.isSelf(this.username.value()) && !actor.isManagerOrMaster()) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
     }
 }

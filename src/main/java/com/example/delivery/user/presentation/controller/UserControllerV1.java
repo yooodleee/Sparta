@@ -1,5 +1,6 @@
 package com.example.delivery.user.presentation.controller;
 
+import com.example.delivery.global.common.auth.LoginUser;
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.global.infrastructure.security.UserPrincipal;
@@ -38,33 +39,33 @@ public class UserControllerV1 {
             @RequestParam(required = false) UserRole role,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal UserPrincipal me) {
-        return ApiResponse.ok(userService.search(keyword, role, pageable, me.toLoginUser()));
+        return ApiResponse.ok(userService.search(keyword, role, pageable, LoginUser.from(me)));
     }
 
     @GetMapping("/{username}")
     public ApiResponse<ResUserDto> getOne(@PathVariable String username,
             @AuthenticationPrincipal UserPrincipal me) {
-        return ApiResponse.ok(userService.getOne(username, me.toLoginUser()));
+        return ApiResponse.ok(userService.getOne(username, LoginUser.from(me)));
     }
 
     @PatchMapping("/{username}")
     public ApiResponse<ResUserDto> update(@PathVariable String username,
             @Valid @RequestBody ReqUpdateUser req,
             @AuthenticationPrincipal UserPrincipal me) {
-        return ApiResponse.ok(userService.update(username, req, me.toLoginUser()));
+        return ApiResponse.ok(userService.update(username, req, LoginUser.from(me)));
     }
 
     @DeleteMapping("/{username}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void softDelete(@PathVariable String username,
             @AuthenticationPrincipal UserPrincipal me) {
-        userService.softDelete(username, me.toLoginUser());
+        userService.softDelete(username, LoginUser.from(me));
     }
 
     @PatchMapping("/{username}/role")
     public ApiResponse<ResUserDto> changeRole(@PathVariable String username,
             @Valid @RequestBody ReqChangeRole req,
             @AuthenticationPrincipal UserPrincipal me) {
-        return ApiResponse.ok(userService.changeRole(username, req, me.toLoginUser()));
+        return ApiResponse.ok(userService.changeRole(username, req, LoginUser.from(me)));
     }
 }
