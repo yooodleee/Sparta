@@ -47,6 +47,7 @@ public enum ErrorCode {
 
     // Area
     AREA_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "삭제된 지역명입니다."),
+    AREA_NOT_FOUND(HttpStatus.NOT_FOUND, "지역을 찾을 수 없습니다."),
     AREA_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 존재하는 지역명입니다."),
 
     // Category
