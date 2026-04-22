@@ -4,22 +4,20 @@ import com.example.delivery.user.domain.entity.UserEntity;
 import com.example.delivery.user.domain.entity.UserRole;
 import java.time.LocalDateTime;
 
-public record ResUserDto(
+public record ResSignup(
         String username,
         String nickname,
         String email,
         UserRole role,
-        boolean isPublic,
         LocalDateTime createdAt
 ) {
 
-    public static ResUserDto from(UserEntity user) {
-        return new ResUserDto(
+    public static ResSignup from(UserEntity user) {
+        return new ResSignup(
                 user.getUsername().value(),
                 user.getNickname(),
                 user.getEmail().value(),
                 user.getRole(),
-                user.isPublic(),
                 user.getCreatedAt());
     }
 }

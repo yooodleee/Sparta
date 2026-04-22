@@ -1,5 +1,6 @@
 package com.example.delivery.global.infrastructure.security;
 
+import com.example.delivery.global.common.auth.LoginUser;
 import com.example.delivery.user.domain.entity.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -8,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -29,12 +31,12 @@ public class JwtTokenProvider {
         this.expiration = Duration.ofMinutes(expirationMinutes);
     }
 
-    public String issue(UserPrincipal principal) {
+    public String issue(LoginUser actor) {
         Instant now = Instant.now();
         return Jwts.builder()
-                .subject(principal.username())
-                .claim(CLAIM_USER_ID, principal.id())
-                .claim(CLAIM_ROLE, principal.role().name())
+                .subject(actor.username())
+                .claim(CLAIM_USER_ID, actor.id().toString())
+                .claim(CLAIM_ROLE, actor.role().name())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(expiration)))
                 .signWith(secretKey, Jwts.SIG.HS256)
@@ -48,7 +50,7 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        Long id = claims.get(CLAIM_USER_ID, Long.class);
+        UUID id = UUID.fromString(claims.get(CLAIM_USER_ID, String.class));
         String username = claims.getSubject();
         UserRole role = UserRole.valueOf(claims.get(CLAIM_ROLE, String.class));
         return new UserPrincipal(id, username, role);
