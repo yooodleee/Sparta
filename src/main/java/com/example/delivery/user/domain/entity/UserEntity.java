@@ -5,6 +5,7 @@ import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.infrastructure.entity.BaseEntity;
 import com.example.delivery.user.domain.command.UserUpdateCommand;
+import com.example.delivery.user.domain.policy.UserAccessPolicy;
 import com.example.delivery.user.domain.vo.Email;
 import com.example.delivery.user.domain.vo.EmailConverter;
 import com.example.delivery.user.domain.vo.Username;
@@ -73,13 +74,7 @@ public class UserEntity extends BaseEntity {
     }
 
     public void update(LoginUser actor, UserUpdateCommand command) {
-        boolean self = actor.isSelf(this.username.value());
-        if (!self) {
-            assertManageableByNonSelf(actor);
-        }
-        if (command.newPasswordHash().isPresent() && !self) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
-        }
+        UserAccessPolicy.assertUpdatable(actor, this.username.value(), this.role, command);
         command.nickname().ifPresent(value -> this.nickname = value);
         command.email().ifPresent(value -> this.email = value);
         command.newPasswordHash().ifPresent(value -> this.passwordHash = value);
@@ -87,37 +82,17 @@ public class UserEntity extends BaseEntity {
     }
 
     public void deleteBy(LoginUser actor) {
-        if (actor.isSelf(this.username.value())) {
-            throw new BusinessException(ErrorCode.CANNOT_DELETE_SELF);
-        }
-        assertManageableByNonSelf(actor);
+        UserAccessPolicy.assertDeletable(actor, this.username.value(), this.role);
         softDelete(actor.username());
     }
 
     public void changeRoleBy(LoginUser actor, UserRole newRole) {
-        if (!actor.isMaster()) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
-        }
-        if (actor.isSelf(this.username.value())) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
-        }
+        UserAccessPolicy.assertRoleChangeable(actor, this.username.value());
         this.role = newRole;
     }
 
     public void assertReadableBy(LoginUser actor) {
-        if (actor.isSelf(this.username.value())) {
-            return;
-        }
-        assertManageableByNonSelf(actor);
-    }
-
-    private void assertManageableByNonSelf(LoginUser actor) {
-        if (!actor.isManagerOrMaster()) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
-        }
-        if (this.role.isPrivileged() && !actor.isMaster()) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
-        }
+        UserAccessPolicy.assertReadable(actor, this.username.value(), this.role);
     }
 
     public void verifyPassword(String raw, PasswordEncoder encoder) {
