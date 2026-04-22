@@ -29,7 +29,7 @@
 
 ## 핵심 규약 (요약)
 
-- 모든 테이블 `p_` 접두사, PK는 **UUID v4** (유저 제외 — `username` VARCHAR PK)
+- 모든 테이블 `p_` 접두사, PK는 **UUID v4**
 - `BaseEntity` 상속: `created_at/by`, `updated_at/by`, `deleted_at/by` (일부 로그 테이블 제외)
 - Soft Delete (`deleted_at`) 기본, 숨김(`is_hidden`)은 별개 필드
 - 매 요청 시 JWT + DB 권한 재검증

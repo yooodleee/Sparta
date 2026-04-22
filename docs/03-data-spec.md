@@ -7,7 +7,8 @@
 ## 1. 공통 규칙
 
 - 모든 테이블 접두사: `p_`
-- PK: UUID (유저만 `username` VARCHAR 예외)
+- PK: UUID
+- 유저 참조 컬럼(`customer_id`, `owner_id`, `user_id` 등)은 편의상 `username` VARCHAR(10) 문자열을 저장한다. p_user의 논리적 참조 키는 `username`(UNIQUE) 컬럼.
 - **BaseEntity 상속 테이블** (자동 Audit 컬럼)
     - `created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`
 - **BaseEntity 미상속 테이블**: `p_order_item`, `p_ai_request_log`
@@ -40,7 +41,8 @@ erDiagram
     p_address ||--o{ p_order : "배송지 → 주문"
 
     p_user {
-      VARCHAR_10 username PK
+      UUID user_id PK
+      VARCHAR_10 username UK
       VARCHAR_100 nickname
       VARCHAR_255 email UK
       VARCHAR_255 password
@@ -129,17 +131,18 @@ erDiagram
 
 ## 3. 테이블 명세
 
-### 3.1 `p_user` (사용자) — PK 예외
+### 3.1 `p_user` (사용자)
 
-| 필드         | 타입           | 제약               | 설명                            |
-|------------|--------------|------------------|-------------------------------|
-| username   | VARCHAR(10)  | PK               | `^[a-z0-9]{4,10}$`            |
-| nickname   | VARCHAR(100) | NOT NULL         |                               |
-| email      | VARCHAR(255) | UNIQUE, NOT NULL |                               |
-| password   | VARCHAR(255) | NOT NULL         | BCrypt                        |
-| role       | VARCHAR(20)  | NOT NULL         | CUSTOMER/OWNER/MANAGER/MASTER |
-| is_public  | BOOLEAN      | DEFAULT true     |                               |
-| + Audit 6개 |              |                  | BaseEntity                    |
+| 필드         | 타입           | 제약                       | 설명                            |
+|------------|--------------|--------------------------|-------------------------------|
+| user_id    | UUID         | PK                       |                               |
+| username   | VARCHAR(10)  | UNIQUE, NOT NULL         | `^[a-z0-9]{4,10}$`            |
+| nickname   | VARCHAR(100) | NOT NULL                 |                               |
+| email      | VARCHAR(255) | UNIQUE, NOT NULL         |                               |
+| password   | VARCHAR(255) | NOT NULL                 | BCrypt                        |
+| role       | VARCHAR(20)  | NOT NULL                 | CUSTOMER/OWNER/MANAGER/MASTER |
+| is_public  | BOOLEAN      | NOT NULL, DEFAULT true   | 예약 필드(현재 read 범위 제어에 사용되지 않음) |
+| + Audit 6개 |              |                          | BaseEntity                    |
 
 ### 3.2 `p_area` (운영 지역)
 
