@@ -254,25 +254,28 @@ erDiagram
 
 ### 3.11 `p_ai_request_log` (AI 요청 로그) — Audit 미상속
 
-| 필드            | 타입           | 제약                             | 설명                  |
-|---------------|--------------|--------------------------------|---------------------|
-| ai_log_id     | UUID         | PK                             |                     |
-| user_id       | VARCHAR(10)  | FK → p_user.username, NOT NULL |                     |
-| request_text  | VARCHAR(100) | NOT NULL                       | 최대 100자             |
-| response_text | TEXT         |                                | Gemini 응답           |
-| request_type  | VARCHAR(30)  | NOT NULL                       | PRODUCT_DESCRIPTION |
-| created_at    | TIMESTAMP    | NOT NULL                       |                     |
-| created_by    | VARCHAR(100) |                                |                     |
+| 필드            | 타입          | 제약                             | 설명                  |
+|---------------|-------------|--------------------------------|---------------------|
+| ai_log_id     | UUID        | PK                             |                     |
+| user_id       | VARCHAR(10) | FK → p_user.username, NOT NULL |                     |
+| request_text  | VARCHAR(100) | NOT NULL                       | 최대 100자 (prompt)    |
+| response_text | TEXT        |                                | Gemini 응답           |
+| request_type  | VARCHAR(30) | NOT NULL                       | PRODUCT_DESCRIPTION |
+| menu_id       | UUID        | FK → p_menu.menu_id            | AI 응답이 적용된 메뉴 ID |
+| is_applied    | BOOLEAN     | NOT NULL, DEFAULT false        | 메뉴에 실제 반영되었는지 여부 |
+| created_at    | TIMESTAMP   | NOT NULL                       |                     |
+| created_by    | VARCHAR(10) |                                |                     |
 
 ## 4. 인덱스 가이드 (권장)
 
-| 테이블              | 인덱스                                               | 목적           |
-|------------------|---------------------------------------------------|--------------|
-| p_store          | `(category_id)`, `(area_id)`, `(name)`            | 복합 검색        |
-| p_menu           | `(store_id)`                                      | 가게별 메뉴 조회    |
-| p_order          | `(customer_id, created_at)`, `(store_id, status)` | 사용자/가게 주문 목록 |
-| p_order_item     | `(order_id)`                                      | 라인 조회        |
-| p_review         | `(store_id, created_at)`                          | 가게 리뷰 리스트    |
-| p_payment        | `(order_id)` UNIQUE                               | 결제 1:1       |
-| p_address        | `(user_id, is_default)`                           | 기본 배송지 조회    |
-| p_ai_request_log | `(user_id, created_at)`                           | 사용자 로그 조회    |
+| 테이블              | 인덱스                                               | 목적                   |
+|------------------|---------------------------------------------------|----------------------|
+| p_store          | `(category_id)`, `(area_id)`, `(name)`            | 복합 검색                |
+| p_menu           | `(store_id)`                                      | 가게별 메뉴 조회            |
+| p_order          | `(customer_id, created_at)`, `(store_id, status)` | 사용자/가게 주문 목록         |
+| p_order_item     | `(order_id)`                                      | 라인 조회                |
+| p_review         | `(store_id, created_at)`                          | 가게 리뷰 리스트            |
+| p_payment        | `(order_id)` UNIQUE                               | 결제 1:1               |
+| p_address        | `(user_id, is_default)`                           | 기본 배송지 조회            |
+| p_ai_request_log | `(user_id, created_at)`                           | 사용자별 AI 호출 이력 (로그)조회 |
+| p_ai_request_log | `(menu_id, is_applied)`                           | 특정 메뉴에 최종 반영된 AI 로그 조회 |

@@ -173,9 +173,13 @@
 
 ### 2.11 AI `/api/v1/ai`
 
-| Method | Path                   | 설명                  | 권한    |
-|--------|------------------------|---------------------|-------|
-| POST   | `/product-description` | AI 상품 설명 생성 (독립 호출) | OWNER |
+| Method | Path                                    | 설명                    | 권한    |
+|--------|-----------------------------------------|-----------------------|-------|
+| POST   | `/api/v1/menus/{menuId}/ai-description` | 특정 메뉴의 AI 설명 생성       | OWNER |
+| PATCH  | `/api/v1/ai/logs/{aiLogId}/apply`       | 생성된 AI 설명을 메뉴에 실제 반영  | OWNER |
+→ 향후 메뉴 외에 리뷰, 가게 홍보 등 새로운 AI 기능 추가 시, 해당 도메인의 하위 리소스로 API를 설계하여 도메인 간 독립성을 유지할 예정
+→ 예: POST /api/v1/reviews/{reviewId}/ai-summary (리뷰 요약)
+
 
 ## 3. 대표 요청/응답 예시
 
@@ -285,15 +289,26 @@ POST /api/v1/addresses
 }
 ```
 
-### 3.10 AI 상품 설명 (독립)
+### 3.10 AI 상품 설명
 
+-1. 설명 생성 요청
 ```http
-POST /api/v1/ai/product-description
-{ "prompt": "만두 상품의 이름을 추천해줘" }
+POST /api/v1/menus/{menuId}/ai-description
+{ "prompt": "매콤하고 바삭한 양념치킨의 특징을 살려줘" }
 ```
-
 → 서버가 prompt 끝에 `"답변을 최대한 간결하게 50자 이하로"` 자동 삽입
-→ `data`: { prompt, result }
+→ p_ai_request_log에 is_applied=false 상태로 기록 저장
+→ `data`: { "aiLogId": "7fa93d23-5204-4cab-a044-0dd21aec16a2",
+"prompt": "매콤하고 바삭한 양념치킨의 특징을 살려줘", "responseText": "임안 가득 퍼지는 소스와 바삭한 치킨의 조화" }
+
+-2. 확정 및 메뉴 반영
+```http
+PATCH /api/v1/ai/logs/{aiLogId}/apply
+Authorization : Bearer {JWT}
+```
+→ 해당 로그의 is_applied를 true로 변경
+→ 연관된 Menu의 description 필드를 responseText 값으로 업데이트
+→ 200 SUCCESS 반환
 
 ## 4. 에러 코드 (요약)
 
