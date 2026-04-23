@@ -52,12 +52,14 @@ class UserServiceUpdateTest {
     }
 
     @Test
-    @DisplayName("본인은 nickname/email/password/isPublic 모두 수정 가능")
+    @DisplayName("본인은 nickname/email/password/isPublic 모두 수정 가능 (currentPassword 일치)")
     void self_canUpdateAll() {
         given(userRepository.existsByEmailExcept(any(), any())).willReturn(false);
+        given(passwordEncoder.matches("OldPass1!", "hash")).willReturn(true);
         given(passwordEncoder.encode("Abcd1234!")).willReturn("new-hash");
 
-        ReqUpdateUser req = new ReqUpdateUser("NewNick", "new@mail.co", "Abcd1234!", false);
+        ReqUpdateUser req = new ReqUpdateUser(
+                "NewNick", "new@mail.co", "Abcd1234!", "OldPass1!", false);
         LoginUser me = new LoginUser(UUID.randomUUID(), "alice", UserRole.CUSTOMER);
 
         assertThatCode(() -> userService.update("alice", req, me)).doesNotThrowAnyException();
@@ -70,10 +72,46 @@ class UserServiceUpdateTest {
     }
 
     @Test
+    @DisplayName("본인이 password 변경 시 currentPassword 누락 → 400")
+    void self_passwordChange_missingCurrent() {
+        ReqUpdateUser req = new ReqUpdateUser(null, null, "Abcd1234!", null, null);
+        LoginUser me = new LoginUser(UUID.randomUUID(), "alice", UserRole.CUSTOMER);
+
+        assertThatThrownBy(() -> userService.update("alice", req, me))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CURRENT_PASSWORD_REQUIRED);
+        assertThat(target.getPasswordHash()).isEqualTo("hash");
+    }
+
+    @Test
+    @DisplayName("본인이 password 변경 시 currentPassword 불일치 → 401")
+    void self_passwordChange_mismatch() {
+        given(passwordEncoder.matches("WrongOld1!", "hash")).willReturn(false);
+
+        ReqUpdateUser req = new ReqUpdateUser(null, null, "Abcd1234!", "WrongOld1!", null);
+        LoginUser me = new LoginUser(UUID.randomUUID(), "alice", UserRole.CUSTOMER);
+
+        assertThatThrownBy(() -> userService.update("alice", req, me))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_CURRENT_PASSWORD);
+        assertThat(target.getPasswordHash()).isEqualTo("hash");
+    }
+
+    @Test
+    @DisplayName("password 없는 본인 업데이트는 currentPassword 없이도 통과")
+    void self_updateWithoutPassword_doesNotRequireCurrent() {
+        ReqUpdateUser req = new ReqUpdateUser("NewNick", null, null, null, null);
+        LoginUser me = new LoginUser(UUID.randomUUID(), "alice", UserRole.CUSTOMER);
+
+        assertThatCode(() -> userService.update("alice", req, me)).doesNotThrowAnyException();
+        assertThat(target.getNickname()).isEqualTo("NewNick");
+    }
+
+    @Test
     @DisplayName("MANAGER는 타인 수정 가능하나 password 수정 시도는 403")
     void manager_blockedFromPassword() {
         given(passwordEncoder.encode("Abcd1234!")).willReturn("enc");
-        ReqUpdateUser req = new ReqUpdateUser("x", null, "Abcd1234!", null);
+        ReqUpdateUser req = new ReqUpdateUser("x", null, "Abcd1234!", null, null);
         LoginUser me = new LoginUser(UUID.randomUUID(), "bob", UserRole.MANAGER);
 
         assertThatThrownBy(() -> userService.update("alice", req, me))
@@ -89,7 +127,7 @@ class UserServiceUpdateTest {
                 new Email("mo@example.com"), "hash", UserRole.MANAGER);
         given(userRepository.findByUsername("momo")).willReturn(Optional.of(manager));
 
-        ReqUpdateUser req = new ReqUpdateUser("x", null, null, null);
+        ReqUpdateUser req = new ReqUpdateUser("x", null, null, null, null);
         LoginUser other = new LoginUser(UUID.randomUUID(), "mgr2", UserRole.MANAGER);
 
         assertThatThrownBy(() -> userService.update("momo", req, other))
@@ -105,7 +143,7 @@ class UserServiceUpdateTest {
                 new Email("root@example.com"), "hash", UserRole.MASTER);
         given(userRepository.findByUsername("root")).willReturn(Optional.of(master));
 
-        ReqUpdateUser req = new ReqUpdateUser("x", null, null, null);
+        ReqUpdateUser req = new ReqUpdateUser("x", null, null, null, null);
         LoginUser mgr = new LoginUser(UUID.randomUUID(), "mgr1", UserRole.MANAGER);
 
         assertThatThrownBy(() -> userService.update("root", req, mgr))
@@ -121,7 +159,7 @@ class UserServiceUpdateTest {
                 new Email("mo@example.com"), "hash", UserRole.MANAGER);
         given(userRepository.findByUsername("momo")).willReturn(Optional.of(manager));
 
-        ReqUpdateUser req = new ReqUpdateUser("x", null, null, null);
+        ReqUpdateUser req = new ReqUpdateUser("x", null, null, null, null);
         LoginUser master = new LoginUser(UUID.randomUUID(), "root", UserRole.MASTER);
 
         assertThatCode(() -> userService.update("momo", req, master)).doesNotThrowAnyException();
@@ -131,7 +169,7 @@ class UserServiceUpdateTest {
     @Test
     @DisplayName("MASTER는 타인 수정 가능 (password 제외)")
     void master_canUpdateNickname() {
-        ReqUpdateUser req = new ReqUpdateUser("x", null, null, null);
+        ReqUpdateUser req = new ReqUpdateUser("x", null, null, null, null);
         LoginUser me = new LoginUser(UUID.randomUUID(), "root", UserRole.MASTER);
 
         assertThatCode(() -> userService.update("alice", req, me)).doesNotThrowAnyException();
@@ -140,7 +178,7 @@ class UserServiceUpdateTest {
     @Test
     @DisplayName("일반 타인(CUSTOMER)은 타인 수정 시 403")
     void other_forbidden() {
-        ReqUpdateUser req = new ReqUpdateUser("x", null, null, null);
+        ReqUpdateUser req = new ReqUpdateUser("x", null, null, null, null);
         LoginUser me = new LoginUser(UUID.randomUUID(), "bob", UserRole.CUSTOMER);
 
         assertThatThrownBy(() -> userService.update("alice", req, me))
@@ -152,7 +190,7 @@ class UserServiceUpdateTest {
     @DisplayName("본인이 중복 email(다른 사용자 사용 중)로 수정 시 409")
     void self_duplicateEmail() {
         given(userRepository.existsByEmailExcept("taken@mail.co", "alice")).willReturn(true);
-        ReqUpdateUser req = new ReqUpdateUser(null, "taken@mail.co", null, null);
+        ReqUpdateUser req = new ReqUpdateUser(null, "taken@mail.co", null, null, null);
         LoginUser me = new LoginUser(UUID.randomUUID(), "alice", UserRole.CUSTOMER);
 
         assertThatThrownBy(() -> userService.update("alice", req, me))

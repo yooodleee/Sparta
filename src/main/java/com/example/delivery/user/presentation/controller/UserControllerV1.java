@@ -42,6 +42,12 @@ public class UserControllerV1 {
         return ApiResponse.ok(userService.search(keyword, role, pageable, LoginUser.from(me)));
     }
 
+    @GetMapping("/me")
+    public ApiResponse<ResUserDto> getMe(@AuthenticationPrincipal UserPrincipal me) {
+        LoginUser actor = LoginUser.from(me);
+        return ApiResponse.ok(userService.getOne(actor.username(), actor));
+    }
+
     @GetMapping("/{username}")
     public ApiResponse<ResUserDto> getOne(@PathVariable String username,
             @AuthenticationPrincipal UserPrincipal me) {

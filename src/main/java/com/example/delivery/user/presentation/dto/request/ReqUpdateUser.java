@@ -6,6 +6,7 @@ public record ReqUpdateUser(
         @Size(max = 100) String nickname,
         @Size(max = 255) String email,
         @Size(min = 8, max = 15) String password,
+        @Size(min = 8, max = 15) String currentPassword,
         Boolean isPublic
 ) {
 
