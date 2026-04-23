@@ -3,6 +3,8 @@ package com.example.delivery.review.application.service;
 import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.infrastructure.security.UserPrincipal;
+import com.example.delivery.order.domain.entity.OrderEntity;
+import com.example.delivery.order.infrastructure.repository.OrderRepository;
 import com.example.delivery.review.domain.entity.ReviewEntity;
 import com.example.delivery.review.domain.repository.ReviewRepository;
 import com.example.delivery.review.presentation.dto.request.ReqCreateReviewDto;
@@ -22,13 +24,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final OrderRepository orderRepository;
 
     @Transactional
     public ResReviewDto createReview(UUID orderId, ReqCreateReviewDto request, UserPrincipal principal) {
 
-        // TODO: [Order 구현 이후] orderId로 Order 조회
-        // OrderEntity order = orderRepository.findById(orderId)
-        //         .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
         // TODO: [Order 구현 이후] 주문 완료 상태 검증
         // if (order.getStatus() != OrderStatus.COMPLETED) {
