@@ -65,6 +65,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/orders/*/reviews").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/reviews/*").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/reviews/*").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/orders").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/orders/*/cancel").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/orders/*/status").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/orders/*/request").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtTokenProvider, userRepository, objectMapper),
