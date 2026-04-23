@@ -37,10 +37,9 @@ public class ReviewService {
             throw new BusinessException(ErrorCode.ORDER_NOT_COMPLETED);
         }
 
-        // TODO: [Order 구현 이후] 본인 주문 여부 검증
-        // if (!order.getCustomerId().equals(principal.username())) {
-        //     throw new BusinessException(ErrorCode.FORBIDDEN);
-        // }
+        if (!order.getCustomerId().equals(principal.username())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
 
         // 1주문 1리뷰 중복 검증
         if (reviewRepository.existsByOrderId(orderId)) {

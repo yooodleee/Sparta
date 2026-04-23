@@ -85,11 +85,31 @@ class ReviewServiceTest {
         }
 
         @Test
+        @DisplayName("본인 주문이 아님 → FORBIDDEN 예외")
+        void notOwnerOrder_throwsException() {
+            // given
+            OrderEntity order = mock(OrderEntity.class);
+            given(order.getStatus()).willReturn(OrderStatus.COMPLETED);
+            given(order.getCustomerId()).willReturn("otheruser");
+            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(order));
+
+            // when / then
+            assertThatThrownBy(() -> reviewService.createReview(ORDER_ID, validRequest(), principal))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.FORBIDDEN));
+
+            verify(reviewRepository, never()).existsByOrderId(any());
+            verify(reviewRepository, never()).save(any());
+        }
+
+        @Test
         @DisplayName("존재하는 orderId, 중복 리뷰 → DUPLICATE_REVIEW 예외")
         void duplicateReview_throwsException() {
             // given
             OrderEntity order = mock(OrderEntity.class);
             given(order.getStatus()).willReturn(OrderStatus.COMPLETED);
+            given(order.getCustomerId()).willReturn(principal.username());
             given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(order));
             given(reviewRepository.existsByOrderId(ORDER_ID)).willReturn(true);
 
@@ -108,6 +128,7 @@ class ReviewServiceTest {
             // given
             OrderEntity order = mock(OrderEntity.class);
             given(order.getStatus()).willReturn(OrderStatus.COMPLETED);
+            given(order.getCustomerId()).willReturn(principal.username());
 
             ReviewEntity savedReview = ReviewEntity.builder()
                     .orderId(ORDER_ID)
