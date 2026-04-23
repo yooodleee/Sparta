@@ -7,7 +7,8 @@
 ## 1. 공통 규칙
 
 - 모든 테이블 접두사: `p_`
-- PK: UUID (유저만 `username` VARCHAR 예외)
+- PK: UUID
+- 유저 참조 컬럼(`customer_id`, `owner_id`, `user_id` 등)은 편의상 `username` VARCHAR(10) 문자열을 저장한다. p_user의 논리적 참조 키는 `username`(UNIQUE) 컬럼.
 - **BaseEntity 상속 테이블** (자동 Audit 컬럼)
     - `created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`
 - **BaseEntity 미상속 테이블**: `p_order_item`, `p_ai_request_log`
@@ -40,7 +41,8 @@ erDiagram
     p_address ||--o{ p_order : "배송지 → 주문"
 
     p_user {
-      VARCHAR_10 username PK
+      UUID user_id PK
+      VARCHAR_10 username UK
       VARCHAR_100 nickname
       VARCHAR_255 email UK
       VARCHAR_255 password
@@ -129,17 +131,18 @@ erDiagram
 
 ## 3. 테이블 명세
 
-### 3.1 `p_user` (사용자) — PK 예외
+### 3.1 `p_user` (사용자)
 
-| 필드         | 타입           | 제약               | 설명                            |
-|------------|--------------|------------------|-------------------------------|
-| username   | VARCHAR(10)  | PK               | `^[a-z0-9]{4,10}$`            |
-| nickname   | VARCHAR(100) | NOT NULL         |                               |
-| email      | VARCHAR(255) | UNIQUE, NOT NULL |                               |
-| password   | VARCHAR(255) | NOT NULL         | BCrypt                        |
-| role       | VARCHAR(20)  | NOT NULL         | CUSTOMER/OWNER/MANAGER/MASTER |
-| is_public  | BOOLEAN      | DEFAULT true     |                               |
-| + Audit 6개 |              |                  | BaseEntity                    |
+| 필드         | 타입           | 제약                       | 설명                            |
+|------------|--------------|--------------------------|-------------------------------|
+| user_id    | UUID         | PK                       |                               |
+| username   | VARCHAR(10)  | UNIQUE, NOT NULL         | `^[a-z0-9]{4,10}$`            |
+| nickname   | VARCHAR(100) | NOT NULL                 |                               |
+| email      | VARCHAR(255) | UNIQUE, NOT NULL         |                               |
+| password   | VARCHAR(255) | NOT NULL                 | BCrypt                        |
+| role       | VARCHAR(20)  | NOT NULL                 | CUSTOMER/OWNER/MANAGER/MASTER |
+| is_public  | BOOLEAN      | NOT NULL, DEFAULT true   | 예약 필드(현재 read 범위 제어에 사용되지 않음) |
+| + Audit 6개 |              |                          | BaseEntity                    |
 
 ### 3.2 `p_area` (운영 지역)
 
@@ -251,25 +254,28 @@ erDiagram
 
 ### 3.11 `p_ai_request_log` (AI 요청 로그) — Audit 미상속
 
-| 필드            | 타입           | 제약                             | 설명                  |
-|---------------|--------------|--------------------------------|---------------------|
-| ai_log_id     | UUID         | PK                             |                     |
-| user_id       | VARCHAR(10)  | FK → p_user.username, NOT NULL |                     |
-| request_text  | VARCHAR(100) | NOT NULL                       | 최대 100자             |
-| response_text | TEXT         |                                | Gemini 응답           |
-| request_type  | VARCHAR(30)  | NOT NULL                       | PRODUCT_DESCRIPTION |
-| created_at    | TIMESTAMP    | NOT NULL                       |                     |
-| created_by    | VARCHAR(100) |                                |                     |
+| 필드            | 타입          | 제약                             | 설명                  |
+|---------------|-------------|--------------------------------|---------------------|
+| ai_log_id     | UUID        | PK                             |                     |
+| user_id       | VARCHAR(10) | FK → p_user.username, NOT NULL |                     |
+| request_text  | VARCHAR(100) | NOT NULL                       | 최대 100자 (prompt)    |
+| response_text | TEXT        |                                | Gemini 응답           |
+| request_type  | VARCHAR(30) | NOT NULL                       | PRODUCT_DESCRIPTION |
+| menu_id       | UUID        | FK → p_menu.menu_id            | AI 응답이 적용된 메뉴 ID |
+| is_applied    | BOOLEAN     | NOT NULL, DEFAULT false        | 메뉴에 실제 반영되었는지 여부 |
+| created_at    | TIMESTAMP   | NOT NULL                       |                     |
+| created_by    | VARCHAR(10) |                                |                     |
 
 ## 4. 인덱스 가이드 (권장)
 
-| 테이블              | 인덱스                                               | 목적           |
-|------------------|---------------------------------------------------|--------------|
-| p_store          | `(category_id)`, `(area_id)`, `(name)`            | 복합 검색        |
-| p_menu           | `(store_id)`                                      | 가게별 메뉴 조회    |
-| p_order          | `(customer_id, created_at)`, `(store_id, status)` | 사용자/가게 주문 목록 |
-| p_order_item     | `(order_id)`                                      | 라인 조회        |
-| p_review         | `(store_id, created_at)`                          | 가게 리뷰 리스트    |
-| p_payment        | `(order_id)` UNIQUE                               | 결제 1:1       |
-| p_address        | `(user_id, is_default)`                           | 기본 배송지 조회    |
-| p_ai_request_log | `(user_id, created_at)`                           | 사용자 로그 조회    |
+| 테이블              | 인덱스                                               | 목적                   |
+|------------------|---------------------------------------------------|----------------------|
+| p_store          | `(category_id)`, `(area_id)`, `(name)`            | 복합 검색                |
+| p_menu           | `(store_id)`                                      | 가게별 메뉴 조회            |
+| p_order          | `(customer_id, created_at)`, `(store_id, status)` | 사용자/가게 주문 목록         |
+| p_order_item     | `(order_id)`                                      | 라인 조회                |
+| p_review         | `(store_id, created_at)`                          | 가게 리뷰 리스트            |
+| p_payment        | `(order_id)` UNIQUE                               | 결제 1:1               |
+| p_address        | `(user_id, is_default)`                           | 기본 배송지 조회            |
+| p_ai_request_log | `(user_id, created_at)`                           | 사용자별 AI 호출 이력 (로그)조회 |
+| p_ai_request_log | `(menu_id, is_applied)`                           | 특정 메뉴에 최종 반영된 AI 로그 조회 |
