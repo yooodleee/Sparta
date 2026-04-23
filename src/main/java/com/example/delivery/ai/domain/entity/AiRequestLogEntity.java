@@ -16,24 +16,34 @@ public class AiRequestLogEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "ai_log_id")
     private UUID id;
 
-    //인증/인가 구현 후 User 매핑 예정 (현재는 BaseEntity의 createdBy로 추적)
-    @Column(columnDefinition = "TEXT")
-    private String prompt;
+    @Column(name = "user_id", length = 10, nullable = false)
+    private String userId;
 
-    @Column(columnDefinition = "TEXT")
+    //인증/인가 구현 후 User 매핑 예정 (현재는 BaseEntity의 createdBy로 추적)
+    @Column(name = "request_text", length = 100, nullable = false)
+    private String requestText;
+
+    @Column(name = "response_text", columnDefinition = "TEXT")
     private String responseText;
 
+    @Column(name = "request_type", length = 30, nullable = false)
+    private String requestType;
+
+    @Column(name = "menu_id")
     private UUID menuId;
 
-    @Column(nullable = false)
+    @Column(name = "is_applied", nullable = false)
     private Boolean isApplied = false;
 
     @Builder
-    public AiRequestLogEntity(String prompt, String responseText){
-        this.prompt = prompt;
+    public AiRequestLogEntity(String userId, String requestText, String responseText, String requestType){
+        this.userId = userId;
+        this.requestText = requestText;
         this.responseText = responseText;
+        this.requestType = requestType;
         this.isApplied = false;
     }
 
