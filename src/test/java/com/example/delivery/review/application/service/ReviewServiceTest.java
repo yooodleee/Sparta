@@ -12,6 +12,7 @@ import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.infrastructure.security.UserPrincipal;
 import com.example.delivery.order.domain.entity.OrderEntity;
+import com.example.delivery.order.domain.entity.OrderStatus;
 import com.example.delivery.order.infrastructure.repository.OrderRepository;
 import com.example.delivery.review.domain.entity.ReviewEntity;
 import com.example.delivery.review.domain.repository.ReviewRepository;
@@ -35,7 +36,6 @@ class ReviewServiceTest {
 
     @InjectMocks ReviewService reviewService;
 
-    // ─── 공통 픽스처 ───────────────────────────────────────────────
     private static final UUID ORDER_ID = UUID.randomUUID();
     private static final UUID STORE_ID = UUID.randomUUID();
 
@@ -46,7 +46,6 @@ class ReviewServiceTest {
         return new ReqCreateReviewDto(5, "맛있었어요!", STORE_ID);
     }
 
-    // ─── createReview ──────────────────────────────────────────────
     @Nested
     @DisplayName("createReview — 리뷰 생성")
     class CreateReview {
@@ -68,11 +67,30 @@ class ReviewServiceTest {
         }
 
         @Test
+        @DisplayName("주문 상태가 COMPLETED 아님 → ORDER_NOT_COMPLETED 예외")
+        void orderNotCompleted_throwsException() {
+            // given
+            OrderEntity order = mock(OrderEntity.class);
+            given(order.getStatus()).willReturn(OrderStatus.DELIVERED);
+            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(order));
+
+            // when / then
+            assertThatThrownBy(() -> reviewService.createReview(ORDER_ID, validRequest(), principal))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.ORDER_NOT_COMPLETED));
+
+            verify(reviewRepository, never()).existsByOrderId(any());
+            verify(reviewRepository, never()).save(any());
+        }
+
+        @Test
         @DisplayName("존재하는 orderId, 중복 리뷰 → DUPLICATE_REVIEW 예외")
         void duplicateReview_throwsException() {
             // given
-            given(orderRepository.findById(ORDER_ID))
-                    .willReturn(Optional.of(mock(OrderEntity.class)));
+            OrderEntity order = mock(OrderEntity.class);
+            given(order.getStatus()).willReturn(OrderStatus.COMPLETED);
+            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(order));
             given(reviewRepository.existsByOrderId(ORDER_ID)).willReturn(true);
 
             // when / then
@@ -88,6 +106,9 @@ class ReviewServiceTest {
         @DisplayName("존재하는 orderId, 중복 없음 → 리뷰 저장")
         void success_reviewSaved() {
             // given
+            OrderEntity order = mock(OrderEntity.class);
+            given(order.getStatus()).willReturn(OrderStatus.COMPLETED);
+
             ReviewEntity savedReview = ReviewEntity.builder()
                     .orderId(ORDER_ID)
                     .storeId(STORE_ID)
@@ -96,8 +117,7 @@ class ReviewServiceTest {
                     .content("맛있었어요!")
                     .build();
 
-            given(orderRepository.findById(ORDER_ID))
-                    .willReturn(Optional.of(mock(OrderEntity.class)));
+            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(order));
             given(reviewRepository.existsByOrderId(ORDER_ID)).willReturn(false);
             given(reviewRepository.save(any())).willReturn(savedReview);
 

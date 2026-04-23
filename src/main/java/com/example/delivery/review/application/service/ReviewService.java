@@ -4,6 +4,7 @@ import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.infrastructure.security.UserPrincipal;
 import com.example.delivery.order.domain.entity.OrderEntity;
+import com.example.delivery.order.domain.entity.OrderStatus;
 import com.example.delivery.order.infrastructure.repository.OrderRepository;
 import com.example.delivery.review.domain.entity.ReviewEntity;
 import com.example.delivery.review.domain.repository.ReviewRepository;
@@ -32,10 +33,9 @@ public class ReviewService {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
-        // TODO: [Order 구현 이후] 주문 완료 상태 검증
-        // if (order.getStatus() != OrderStatus.COMPLETED) {
-        //     throw new BusinessException(ErrorCode.ORDER_NOT_COMPLETED);
-        // }
+        if (order.getStatus() != OrderStatus.COMPLETED) {
+            throw new BusinessException(ErrorCode.ORDER_NOT_COMPLETED);
+        }
 
         // TODO: [Order 구현 이후] 본인 주문 여부 검증
         // if (!order.getCustomerId().equals(principal.username())) {
