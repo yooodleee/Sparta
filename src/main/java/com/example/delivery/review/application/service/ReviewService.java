@@ -46,9 +46,7 @@ public class ReviewService {
             throw new BusinessException(ErrorCode.DUPLICATE_REVIEW);
         }
 
-        // TODO: [Order 구현 이후] storeId는 Order 엔티티에서 추출
-        // UUID storeId = order.getStoreId();
-        UUID storeId = request.storeId();
+        UUID storeId = order.getStoreId();
 
         ReviewEntity review = ReviewEntity.builder()
                 .orderId(orderId)

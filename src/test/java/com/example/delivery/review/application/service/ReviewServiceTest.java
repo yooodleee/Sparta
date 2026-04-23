@@ -43,7 +43,7 @@ class ReviewServiceTest {
             new UserPrincipal(1L, "testuser", UserRole.CUSTOMER);
 
     private ReqCreateReviewDto validRequest() {
-        return new ReqCreateReviewDto(5, "맛있었어요!", STORE_ID);
+        return new ReqCreateReviewDto(5, "맛있었어요!");
     }
 
     @Nested
@@ -129,6 +129,7 @@ class ReviewServiceTest {
             OrderEntity order = mock(OrderEntity.class);
             given(order.getStatus()).willReturn(OrderStatus.COMPLETED);
             given(order.getCustomerId()).willReturn(principal.username());
+            given(order.getStoreId()).willReturn(STORE_ID);
 
             ReviewEntity savedReview = ReviewEntity.builder()
                     .orderId(ORDER_ID)
