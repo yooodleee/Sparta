@@ -13,11 +13,14 @@ import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.infrastructure.security.UserPrincipal;
 import com.example.delivery.order.domain.entity.OrderEntity;
 import com.example.delivery.order.domain.entity.OrderStatus;
-import com.example.delivery.order.infrastructure.repository.OrderRepository;
+import com.example.delivery.order.domain.repository.OrderRepository;
 import com.example.delivery.review.domain.entity.ReviewEntity;
 import com.example.delivery.review.domain.repository.ReviewRepository;
 import com.example.delivery.review.presentation.dto.request.ReqCreateReviewDto;
+import com.example.delivery.store.domain.entity.StoreEntity;
+import com.example.delivery.store.domain.repository.StoreRepository;
 import com.example.delivery.user.domain.entity.UserRole;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -33,6 +36,7 @@ class ReviewServiceTest {
 
     @Mock ReviewRepository reviewRepository;
     @Mock OrderRepository  orderRepository;
+    @Mock StoreRepository  storeRepository;
 
     @InjectMocks ReviewService reviewService;
 
@@ -40,7 +44,7 @@ class ReviewServiceTest {
     private static final UUID STORE_ID = UUID.randomUUID();
 
     private final UserPrincipal principal =
-            new UserPrincipal(1L, "testuser", UserRole.CUSTOMER);
+            new UserPrincipal(UUID.randomUUID(), "testuser", UserRole.CUSTOMER);
 
     private ReqCreateReviewDto validRequest() {
         return new ReqCreateReviewDto(5, "맛있었어요!");
@@ -139,15 +143,21 @@ class ReviewServiceTest {
                     .content("맛있었어요!")
                     .build();
 
+            StoreEntity store = mock(StoreEntity.class);
+
             given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(order));
             given(reviewRepository.existsByOrderId(ORDER_ID)).willReturn(false);
             given(reviewRepository.save(any())).willReturn(savedReview);
+            given(storeRepository.findById(STORE_ID)).willReturn(Optional.of(store));
+            given(reviewRepository.findRatingsByStoreId(STORE_ID)).willReturn(List.of(5));
 
             // when
             reviewService.createReview(ORDER_ID, validRequest(), principal);
 
             // then
             verify(reviewRepository).save(any(ReviewEntity.class));
+            verify(store).recalculateAverageRating(List.of(5));
+            verify(storeRepository).save(store);
         }
     }
 }
