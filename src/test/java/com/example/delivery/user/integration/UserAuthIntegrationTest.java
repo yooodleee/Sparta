@@ -113,6 +113,29 @@ class UserAuthIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    @DisplayName("/users/me - 인증된 요청은 본인 정보 반환")
+    void me_returnsSelf() throws Exception {
+        userRepository.save(UserEntity.register(
+                new Username("eve01"), "이브", new Email("eve@example.com"),
+                passwordEncoder.encode("Abcd1234!"), UserRole.CUSTOMER));
+
+        String token = login("eve01", "Abcd1234!");
+
+        mockMvc.perform(get("/api/v1/users/me")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.username").value("eve01"))
+                .andExpect(jsonPath("$.data.role").value("CUSTOMER"));
+    }
+
+    @Test
+    @DisplayName("/users/me - 미인증 요청은 401")
+    void me_unauthenticatedBlocked() throws Exception {
+        mockMvc.perform(get("/api/v1/users/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
     private String login(String username, String password) throws Exception {
         String body = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(APPLICATION_JSON)
