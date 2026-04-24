@@ -18,6 +18,7 @@
 | 05 | [서비스 로직 명세](05-service-spec.md) | 주요 유스케이스 처리 흐름 (요약)   |
 | 06 | [인프라 명세](06-infra-spec.md)      | 배포 아키텍처, 환경 프로필, 보안   |
 | 07 | [코드 레벨 설계](07-code-design.md)   | 패키지 구조 + 클래스/서비스 스케치  |
+| 08 | [애플리케이션 흐름](08-app-flow.md)    | 런타임 컴포넌트 도식 + 유스케이스별 시퀀스 다이어그램 |
 
 ### 팀 컨벤션 문서
 
@@ -28,7 +29,7 @@
 
 ## 핵심 규약 (요약)
 
-- 모든 테이블 `p_` 접두사, PK는 **UUID v4** (유저 제외 — `username` VARCHAR PK)
+- 모든 테이블 `p_` 접두사, PK는 **UUID v4**
 - `BaseEntity` 상속: `created_at/by`, `updated_at/by`, `deleted_at/by` (일부 로그 테이블 제외)
 - Soft Delete (`deleted_at`) 기본, 숨김(`is_hidden`)은 별개 필드
 - 매 요청 시 JWT + DB 권한 재검증

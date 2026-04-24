@@ -26,6 +26,12 @@ public record ReqCreateMenuDto(
         @Schema(description = "숨김 여부", example = "false")
         Boolean isHidden,
 
-        @Schema(description = "AI 생성 시 발급받은 로그 ID(직접 입력 시 생략)", example = "123e4567-e89b-12d3-a456-426614174000")
+        @Schema(description = "품절 여부", example = "false")
+        Boolean isSoldOut,
+
+        @Schema(description = "이미지 URL", example = "https://s3.amaxon.com/.../")
+        String imageUrl,
+
+        @Schema(description = "AI 생성 시 발급받은 로그 ID", example = "123e4567-e89b-12d3-a456-426614174000")
         UUID aiRequestId) {
 }

@@ -1,47 +1,103 @@
 package com.example.delivery.user.domain.entity;
 
+import com.example.delivery.global.common.auth.LoginUser;
+import com.example.delivery.global.common.exception.BusinessException;
+import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.infrastructure.entity.BaseEntity;
+import com.example.delivery.user.domain.command.UserUpdateCommand;
+import com.example.delivery.user.domain.policy.UserAccessPolicy;
+import com.example.delivery.user.domain.vo.Email;
+import com.example.delivery.user.domain.vo.EmailConverter;
+import com.example.delivery.user.domain.vo.Username;
+import com.example.delivery.user.domain.vo.UsernameConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.util.UUID;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.UuidGenerator;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @Getter
-@Table(name = "users")
+@Table(name = "p_user")
+@SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserEntity extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @UuidGenerator
+    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    private UUID id;
 
-    @Column(nullable = false, unique = true, length = 20)
-    private String username;
-
-    @Column(nullable = false, length = 30)
-    private String nickname;
+    @Column(nullable = false, unique = true, length = 10)
+    @Convert(converter = UsernameConverter.class)
+    private Username username;
 
     @Column(nullable = false, length = 100)
-    private String email;
+    private String nickname;
+
+    @Column(nullable = false, unique = true, length = 255)
+    @Convert(converter = EmailConverter.class)
+    private Email email;
+
+    @Column(name = "password", nullable = false, length = 255)
+    private String passwordHash;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
+    @Column(nullable = false, length = 20)
     private UserRole role;
 
-    @Builder
-    private UserEntity(String username, String nickname, String email, UserRole role) {
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic;
+
+    private UserEntity(Username username, String nickname, Email email,
+            String passwordHash, UserRole role) {
         this.username = username;
         this.nickname = nickname;
         this.email = email;
+        this.passwordHash = passwordHash;
         this.role = role;
+        this.isPublic = true;
+    }
+
+    public static UserEntity register(Username username, String nickname, Email email,
+            String passwordHash, UserRole role) {
+        return new UserEntity(username, nickname, email, passwordHash, role);
+    }
+
+    public void update(LoginUser actor, UserUpdateCommand command) {
+        UserAccessPolicy.assertUpdatable(actor, this.username.value(), this.role, command);
+        command.nickname().ifPresent(value -> this.nickname = value);
+        command.email().ifPresent(value -> this.email = value);
+        command.newPasswordHash().ifPresent(value -> this.passwordHash = value);
+        command.isPublic().ifPresent(value -> this.isPublic = value);
+    }
+
+    public void deleteBy(LoginUser actor) {
+        UserAccessPolicy.assertDeletable(actor, this.username.value(), this.role);
+        softDelete(actor.username());
+    }
+
+    public void changeRoleBy(LoginUser actor, UserRole newRole) {
+        UserAccessPolicy.assertRoleChangeable(actor, this.username.value());
+        this.role = newRole;
+    }
+
+    public void assertReadableBy(LoginUser actor) {
+        UserAccessPolicy.assertReadable(actor, this.username.value(), this.role);
+    }
+
+    public void verifyPassword(String raw, PasswordEncoder encoder) {
+        if (!encoder.matches(raw, this.passwordHash)) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
     }
 }

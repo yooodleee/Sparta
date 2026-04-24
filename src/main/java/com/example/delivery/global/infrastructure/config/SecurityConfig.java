@@ -4,12 +4,15 @@ import com.example.delivery.global.infrastructure.security.JwtAuthenticationFilt
 import com.example.delivery.global.infrastructure.security.JwtTokenProvider;
 import com.example.delivery.global.infrastructure.security.RestAccessDeniedHandler;
 import com.example.delivery.global.infrastructure.security.RestAuthenticationEntryPoint;
+import com.example.delivery.user.domain.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -24,6 +27,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -31,12 +35,19 @@ public class SecurityConfig {
             "/actuator/health",
             "/actuator/info",
             "/error",
-            "/api/v1/test/users"
+            "/api/v1/test/users",
+            "/api/v1/auth/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/v3/api-docs",
+            "/v3/api-docs/**"
     };
 
     private final JwtTokenProvider jwtTokenProvider;
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final RestAccessDeniedHandler accessDeniedHandler;
+    private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -54,12 +65,19 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_PATHS).permitAll()
                         .requestMatchers("/api/v1/test/me").authenticated()
+                        .requestMatchers("/api/v1/users/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/orders/*/reviews").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/reviews/*").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/orders/*/reviews").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/reviews/*").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/reviews/*").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/orders").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/orders/*/cancel").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/orders/*/status").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/orders/*/request").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtTokenProvider),
+                        new JwtAuthenticationFilter(jwtTokenProvider, userRepository, objectMapper),
                         UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
