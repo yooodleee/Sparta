@@ -28,7 +28,7 @@ public class AreaRepositoryImpl implements AreaRepository {
 
     @Override
     public Optional<AreaEntity> findByName(String areaName) {
-        return areaJpaRepository.findByName(areaName);
+        return areaJpaRepository.findByNameAndDeletedAtIsNull(areaName);
     }
 
     @Override

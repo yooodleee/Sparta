@@ -33,7 +33,12 @@ public class CategoryDataInitializer implements ApplicationRunner {
         List<String> inserted = new ArrayList<>();
 
         for (String name : DEFAULT_CATEGORY_NAMES) {
-            if (categoryRepository.findByName(name).isPresent()) {
+            /**
+             * findByName: 살아있는(deleted_at IS NULL) 카테고리가 존재하면 skip
+             * findByNameIncludingDeleted: soft-delete 된 카테고리가 존재해도 skip
+             */
+            if (categoryRepository.findByName(name).isPresent()
+                    || categoryRepository.findByNameIncludingDeleted(name).isPresent()) {
                 continue;
             }
             categoryRepository.save(CategoryEntity.builder().name(name).build());
