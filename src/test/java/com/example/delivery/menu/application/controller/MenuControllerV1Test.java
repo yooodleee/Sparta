@@ -1,20 +1,26 @@
 package com.example.delivery.menu.application.controller;
 
 import com.example.delivery.menu.application.service.MenuServiceV1;
+import com.example.delivery.menu.domain.repository.MenuSearchCondition;
 import com.example.delivery.menu.presentation.controller.MenuControllerV1;
 import com.example.delivery.menu.presentation.dto.request.ReqCreateMenuDto;
 import com.example.delivery.menu.presentation.dto.request.ReqUpdateMenuDto;
 import com.example.delivery.menu.presentation.dto.response.ResMenuDto;
+import com.example.delivery.user.domain.entity.UserRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -98,5 +104,42 @@ public class MenuControllerV1Test {
                 .andExpect(jsonPath("$.data").doesNotExist());
     }
 
+    @Test
+    @DisplayName("GET /api/v1/stores/{storeId}menus - CUSTOMER 권한으로 조건 조회 성공")
+    @WithMockUser(roles = "CUSTOMER")
+    void getMenus_CustomerRole_Success() throws Exception {
+        UUID storeId = UUID.randomUUID();
+        Page<ResMenuDto> mockPage = new PageImpl<>(
+                List.of(new ResMenuDto(UUID.randomUUID(), storeId, "치킨", "맛있는 치킨", 20000, false, false, "url", false)),
+                PageRequest.of(0,10),
+                1
+        );
 
+        given(menuService.getMenusWithCondition(eq(storeId), any(MenuSearchCondition.class), any(), eq(UserRole.CUSTOMER)))
+                .willReturn(mockPage);
+
+        mockMvc.perform(get("/api/v1/stores/{storeId}/menus", storeId)
+                .param("keyword", "치킨")
+                .param("size", "10"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].name").value("치킨"))
+                .andExpect(jsonPath("$.data.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/stores/{storeId}/menus - OWNER 권한으로 요청 시 role 분기 작동 성공")
+    @WithMockUser(roles = "OWNER")
+    void getMenus_OwnerRole_Success() throws Exception {
+
+        UUID storeId = UUID.randomUUID();
+        Page<ResMenuDto> mockPage = new PageImpl<>(List.of()); //검증이 목적이므로 빈 응답
+
+        given(menuService.getMenusWithCondition(eq(storeId), any(), any(), eq(UserRole.OWNER)))
+                .willReturn(mockPage);
+
+        mockMvc.perform(get("/api/v1/stores/{storeId}/menus", storeId))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
 }
