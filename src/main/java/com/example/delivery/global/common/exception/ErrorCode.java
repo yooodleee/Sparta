@@ -32,7 +32,7 @@ public enum ErrorCode {
 
     //Menu
     MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다."),
-    STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "가게룰 찾을 수 없습니다."),
+    STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다."),
 
     //AI
     AI_LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "AI 요청 기록을 찾을 수 없습니다."),
@@ -54,6 +54,15 @@ public enum ErrorCode {
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
     DUPLICATE_REVIEW(HttpStatus.CONFLICT, "이미 해당 주문에 리뷰를 작성했습니다."),
     ORDER_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "완료된 주문에만 리뷰를 작성할 수 있습니다."),
+
+    // Store
+    STORE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 가게에 대한 권한이 없습니다."),
+    STORE_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "가게명은 필수입니다."),
+    STORE_ADDRESS_REQUIRED(HttpStatus.BAD_REQUEST, "가게 주소는 필수입니다."),
+    STORE_AREA_REQUIRED(HttpStatus.BAD_REQUEST, "지역 ID는 필수입니다."),
+    STORE_CATEGORY_REQUIRED(HttpStatus.BAD_REQUEST, "카테고리 ID는 필수입니다."),
+    INVALID_STORE_RATING(HttpStatus.BAD_REQUEST, "가게 평균 평점 값이 올바르지 않습니다."),
+    STORE_ALREADY_EXISTS(HttpStatus.CONFLICT, "해당 소유자가 이미 동일한 이름의 가게를 보유하고 있습니다."),
 
     // Area
     AREA_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "삭제된 지역명입니다."),
