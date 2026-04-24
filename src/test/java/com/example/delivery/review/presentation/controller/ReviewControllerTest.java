@@ -102,7 +102,7 @@ class ReviewControllerTest {
     @Test
     @DisplayName("리뷰 생성 - 성공")
     void createReview_success() throws Exception {
-        ReqCreateReviewDto req = new ReqCreateReviewDto(5, "맛있었어요!", STORE_ID);
+        ReqCreateReviewDto req = new ReqCreateReviewDto(5, "맛있었어요!");
         given(reviewService.createReview(eq(ORDER_ID), any(), any()))
                 .willReturn(sampleDto());
 
@@ -119,7 +119,7 @@ class ReviewControllerTest {
     @Test
     @DisplayName("리뷰 생성 - 실패: 인증 없음 (401)")
     void createReview_unauthorized() throws Exception {
-        ReqCreateReviewDto req = new ReqCreateReviewDto(5, "맛있었어요!", STORE_ID);
+        ReqCreateReviewDto req = new ReqCreateReviewDto(5, "맛있었어요!");
 
         mockMvc.perform(post("/api/v1/orders/{orderId}/reviews", ORDER_ID)
                         .with(csrf())
@@ -131,7 +131,7 @@ class ReviewControllerTest {
     @Test
     @DisplayName("리뷰 생성 - 실패: 중복 리뷰 (409)")
     void createReview_duplicate() throws Exception {
-        ReqCreateReviewDto req = new ReqCreateReviewDto(5, "맛있었어요!", STORE_ID);
+        ReqCreateReviewDto req = new ReqCreateReviewDto(5, "맛있었어요!");
         given(reviewService.createReview(any(), any(), any()))
                 .willThrow(new BusinessException(ErrorCode.DUPLICATE_REVIEW));
 
@@ -147,22 +147,7 @@ class ReviewControllerTest {
     @DisplayName("리뷰 생성 - 실패: rating 범위 초과 (400)")
     void createReview_invalidRating() throws Exception {
         String reqBody = """
-                {"rating": 6, "storeId": "%s"}
-                """.formatted(STORE_ID);
-
-        mockMvc.perform(post("/api/v1/orders/{orderId}/reviews", ORDER_ID)
-                        .with(authentication(auth(principal)))
-                        .with(csrf())
-                        .contentType(APPLICATION_JSON)
-                        .content(reqBody))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("리뷰 생성 - 실패: storeId 누락 (400)")
-    void createReview_missingStoreId() throws Exception {
-        String reqBody = """
-                {"rating": 5}
+                {"rating": 6}
                 """;
 
         mockMvc.perform(post("/api/v1/orders/{orderId}/reviews", ORDER_ID)
