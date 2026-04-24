@@ -35,4 +35,14 @@ public class StoreRepositoryImpl implements StoreRepository {
     public Page<StoreEntity> search(String keyword, UUID categoryId, UUID areaId, Pageable pageable) {
         return storeJpaRepository.search(keyword, categoryId, areaId, pageable);
     }
+
+    @Override
+    public boolean existsByCategoryId(UUID categoryId) {
+        return storeJpaRepository.existsByCategoryIdAndDeletedAtIsNull(categoryId);
+    }
+
+    @Override
+    public boolean existsByAreaId(UUID areaId) {
+        return storeJpaRepository.existsByAreaIdAndDeletedAtIsNull(areaId);
+    }
 }

@@ -16,4 +16,8 @@ public interface StoreRepository {
     Optional<StoreEntity> findByOwnerIdAndName(UUID ownerId, String name);
 
     Page<StoreEntity> search(String keyword, UUID categoryId, UUID areaId, Pageable pageable);
+
+    boolean existsByCategoryId(UUID categoryId);
+
+    boolean existsByAreaId(UUID areaId);
 }

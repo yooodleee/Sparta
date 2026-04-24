@@ -9,7 +9,10 @@ import com.example.delivery.area.presentation.dto.request.ReqCreateAreaDto;
 import com.example.delivery.area.presentation.dto.request.ReqUpdateAreaDto;
 import com.example.delivery.area.presentation.dto.response.ResCreateAreaDto;
 import com.example.delivery.area.presentation.dto.response.ResGetAreaDto;
+import com.example.delivery.global.common.exception.BusinessException;
+import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.common.response.PageResponse;
+import com.example.delivery.store.domain.repository.StoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +30,7 @@ import static com.example.delivery.global.common.pageable.PageableUtils.hasKeywo
 public class AreaServiceV1 {
 
     private final AreaRepository areaRepository;
+    private final StoreRepository storeRepository;
 
     @Transactional
     public ResCreateAreaDto createArea(ReqCreateAreaDto request) {
@@ -88,7 +92,15 @@ public class AreaServiceV1 {
     @Transactional
     public void deleteArea(UUID areaId, String deletedBy) {
         AreaEntity area = getAreaEntity(areaId);
+        validateAreaNotInUse(areaId);
         area.softDelete(deletedBy);
+    }
+
+    /** 해당 지역을 사용 중인 살아있는 Store가 있으면 삭제 금지 */
+    private void validateAreaNotInUse(UUID areaId) {
+        if (storeRepository.existsByAreaId(areaId)) {
+            throw new BusinessException(ErrorCode.AREA_IN_USE);
+        }
     }
 
     private AreaEntity getAreaEntity(UUID areaId) {

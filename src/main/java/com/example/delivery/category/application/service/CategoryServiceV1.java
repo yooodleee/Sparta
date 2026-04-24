@@ -9,7 +9,10 @@ import com.example.delivery.category.presentation.dto.request.ReqCreateCategoryD
 import com.example.delivery.category.presentation.dto.request.ReqUpdateCategoryDto;
 import com.example.delivery.category.presentation.dto.response.ResCreateCategoryDto;
 import com.example.delivery.category.presentation.dto.response.ResGetCategoryDto;
+import com.example.delivery.global.common.exception.BusinessException;
+import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.common.response.PageResponse;
+import com.example.delivery.store.domain.repository.StoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +30,7 @@ import static com.example.delivery.global.common.pageable.PageableUtils.hasKeywo
 public class CategoryServiceV1 {
 
     private final CategoryRepository categoryRepository;
+    private final StoreRepository storeRepository;
 
     @Transactional
     public ResCreateCategoryDto createCategory(ReqCreateCategoryDto request) {
@@ -69,7 +73,11 @@ public class CategoryServiceV1 {
         CategoryEntity category = getCategoryEntity(categoryId);
 
         String categoryName = request.name().trim();
-        validateDuplicateCategoryName(categoryName);
+
+        // 이름이 변경된 경우에만 중복 검사를 수행하도록 함
+        if (!category.getName().equals(categoryName)) {
+            validateDuplicateCategoryName(categoryName);
+        }
 
         category.updateName(categoryName);
 
@@ -79,7 +87,15 @@ public class CategoryServiceV1 {
     @Transactional
     public void deleteCategory(UUID categoryId, String deletedBy) {
         CategoryEntity category = getCategoryEntity(categoryId);
+        validateCategoryNotInUse(categoryId);
         category.softDelete(deletedBy);
+    }
+
+    /** 해당 카테고리를 참조 중인 살아있는 Store가 있으면 삭제 금지 */
+    private void validateCategoryNotInUse(UUID categoryId) {
+        if (storeRepository.existsByCategoryId(categoryId)) {
+            throw new BusinessException(ErrorCode.CATEGORY_IN_USE);
+        }
     }
 
     private CategoryEntity getCategoryEntity(UUID categoryId) {
