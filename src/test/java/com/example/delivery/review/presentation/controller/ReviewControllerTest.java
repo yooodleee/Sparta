@@ -11,6 +11,7 @@ import com.example.delivery.review.presentation.dto.response.ResReviewDto;
 import com.example.delivery.user.domain.entity.UserRole;
 import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
+import com.example.delivery.user.domain.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,13 +56,16 @@ class ReviewControllerTest {
     @MockBean JwtTokenProvider jwtTokenProvider;
     @MockBean RestAuthenticationEntryPoint authenticationEntryPoint;
     @MockBean RestAccessDeniedHandler accessDeniedHandler;
+    @MockBean UserRepository userRepository;
 
-    private static final UUID ORDER_ID  = UUID.randomUUID();
-    private static final UUID STORE_ID  = UUID.randomUUID();
-    private static final UUID REVIEW_ID = UUID.randomUUID();
+    private static final UUID ORDER_ID    = UUID.randomUUID();
+    private static final UUID STORE_ID    = UUID.randomUUID();
+    private static final UUID REVIEW_ID   = UUID.randomUUID();
+    private static final UUID CUSTOMER_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final UUID MASTER_ID   = UUID.fromString("00000000-0000-0000-0000-000000000002");
 
     private final UserPrincipal principal =
-            new UserPrincipal(1L, "testuser", UserRole.CUSTOMER);
+            new UserPrincipal(CUSTOMER_ID, "testuser", UserRole.CUSTOMER);
 
     @BeforeEach
     void setupSecurityHandlers() throws Exception {
@@ -122,6 +126,48 @@ class ReviewControllerTest {
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("리뷰 생성 - 실패: OWNER 권한 (403)")
+    void createReview_ownerForbidden() throws Exception {
+        UserPrincipal ownerPrincipal = new UserPrincipal(UUID.randomUUID(), "owner", UserRole.OWNER);
+        ReqCreateReviewDto req = new ReqCreateReviewDto(5, "맛있었어요!");
+
+        mockMvc.perform(post("/api/v1/orders/{orderId}/reviews", ORDER_ID)
+                        .with(authentication(auth(ownerPrincipal)))
+                        .with(csrf())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("리뷰 생성 - 실패: MANAGER 권한 (403)")
+    void createReview_managerForbidden() throws Exception {
+        UserPrincipal managerPrincipal = new UserPrincipal(UUID.randomUUID(), "manager", UserRole.MANAGER);
+        ReqCreateReviewDto req = new ReqCreateReviewDto(5, "맛있었어요!");
+
+        mockMvc.perform(post("/api/v1/orders/{orderId}/reviews", ORDER_ID)
+                        .with(authentication(auth(managerPrincipal)))
+                        .with(csrf())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("리뷰 생성 - 실패: MASTER 권한 (403)")
+    void createReview_masterForbidden() throws Exception {
+        UserPrincipal masterPrincipal = new UserPrincipal(UUID.randomUUID(), "master", UserRole.MASTER);
+        ReqCreateReviewDto req = new ReqCreateReviewDto(5, "맛있었어요!");
+
+        mockMvc.perform(post("/api/v1/orders/{orderId}/reviews", ORDER_ID)
+                        .with(authentication(auth(masterPrincipal)))
+                        .with(csrf())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -226,6 +272,48 @@ class ReviewControllerTest {
     }
 
     @Test
+    @DisplayName("리뷰 수정 - 실패: OWNER 권한 (403)")
+    void updateReview_ownerForbidden() throws Exception {
+        UserPrincipal ownerPrincipal = new UserPrincipal(UUID.randomUUID(), "owner", UserRole.OWNER);
+        ReqUpdateReviewDto req = new ReqUpdateReviewDto(3, "수정");
+
+        mockMvc.perform(patch("/api/v1/reviews/{reviewId}", REVIEW_ID)
+                        .with(authentication(auth(ownerPrincipal)))
+                        .with(csrf())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("리뷰 수정 - 실패: MANAGER 권한 (403)")
+    void updateReview_managerForbidden() throws Exception {
+        UserPrincipal managerPrincipal = new UserPrincipal(UUID.randomUUID(), "manager", UserRole.MANAGER);
+        ReqUpdateReviewDto req = new ReqUpdateReviewDto(3, "수정");
+
+        mockMvc.perform(patch("/api/v1/reviews/{reviewId}", REVIEW_ID)
+                        .with(authentication(auth(managerPrincipal)))
+                        .with(csrf())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("리뷰 수정 - 실패: MASTER 권한 (403)")
+    void updateReview_masterForbidden() throws Exception {
+        UserPrincipal masterPrincipal = new UserPrincipal(UUID.randomUUID(), "master", UserRole.MASTER);
+        ReqUpdateReviewDto req = new ReqUpdateReviewDto(3, "수정");
+
+        mockMvc.perform(patch("/api/v1/reviews/{reviewId}", REVIEW_ID)
+                        .with(authentication(auth(masterPrincipal)))
+                        .with(csrf())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @DisplayName("리뷰 수정 - 실패: 존재하지 않는 리뷰 (404)")
     void updateReview_notFound() throws Exception {
         ReqUpdateReviewDto req = new ReqUpdateReviewDto(3, "수정");
@@ -276,12 +364,37 @@ class ReviewControllerTest {
     @Test
     @DisplayName("리뷰 삭제 - 성공: MASTER 권한으로 타인 리뷰 삭제")
     void deleteReview_masterCanDeleteAny() throws Exception {
-        UserPrincipal masterPrincipal = new UserPrincipal(2L, "master", UserRole.MASTER);
+        UserPrincipal masterPrincipal = new UserPrincipal(MASTER_ID, "master", UserRole.MASTER);
         willDoNothing().given(reviewService).deleteReview(eq(REVIEW_ID), any());
 
         mockMvc.perform(delete("/api/v1/reviews/{reviewId}", REVIEW_ID)
                         .with(authentication(auth(masterPrincipal)))
                         .with(csrf()))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("리뷰 삭제 - 성공: MANAGER 권한으로 타인 리뷰 삭제")
+    void deleteReview_managerCanDeleteAny() throws Exception {
+        UserPrincipal managerPrincipal = new UserPrincipal(UUID.randomUUID(), "manager", UserRole.MANAGER);
+        willDoNothing().given(reviewService).deleteReview(eq(REVIEW_ID), any());
+
+        mockMvc.perform(delete("/api/v1/reviews/{reviewId}", REVIEW_ID)
+                        .with(authentication(auth(managerPrincipal)))
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("리뷰 삭제 - 실패: OWNER 권한으로 타인 리뷰 삭제 (403)")
+    void deleteReview_ownerForbidden() throws Exception {
+        UserPrincipal ownerPrincipal = new UserPrincipal(UUID.randomUUID(), "owner", UserRole.OWNER);
+        willThrow(new BusinessException(ErrorCode.FORBIDDEN))
+                .given(reviewService).deleteReview(any(), any());
+
+        mockMvc.perform(delete("/api/v1/reviews/{reviewId}", REVIEW_ID)
+                        .with(authentication(auth(ownerPrincipal)))
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
     }
 }

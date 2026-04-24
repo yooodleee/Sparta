@@ -1,6 +1,6 @@
 # 07. 코드 레벨 설계 (아주 간단 버전)
 
-> 이전: [인프라 명세](06-infra-spec.md)
+> 이전: [인프라 명세](06-infra-spec.md) · 다음: [애플리케이션 흐름](08-app-flow.md)
 
 도메인 패키지 단위로 Controller / Service / Repository / Entity / DTO를 배치한다. 요구사항의 패키지 구조를 기준으로 핵심 클래스 시그니처만 간략히 정의한다.
 

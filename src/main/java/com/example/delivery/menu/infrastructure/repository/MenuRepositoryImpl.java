@@ -28,6 +28,10 @@ public class MenuRepositoryImpl implements MenuRepository {
     @Override
     public List<MenuEntity> findVisibleMenusByStoreId(UUID storeId){
         return menuJpaRepository.findAllByStoreIdAndDeletedAtIsNullAndIsHiddenFalse(storeId);
+    }
 
+    @Override
+    public List<MenuEntity> findVisibleMenusByStoreIdAndNameContaining(UUID storeId, String keyword){
+        return menuJpaRepository.findAllByStoreIdAndNameContainingAndDeletedAtIsNullAndIsHiddenFalse(storeId, keyword);
     }
 }

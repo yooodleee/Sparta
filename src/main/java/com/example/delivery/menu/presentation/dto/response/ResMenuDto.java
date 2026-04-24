@@ -12,6 +12,8 @@ public record ResMenuDto(
         String description,
         Integer price,
         Boolean isHidden,
+        Boolean isSoldOut,
+        String imageUrl,
         Boolean aiDescription
 ) {
     public static ResMenuDto from(MenuEntity entity) {
@@ -22,6 +24,8 @@ public record ResMenuDto(
                 entity.getDescription(),
                 entity.getPrice(),
                 entity.getIsHidden(),
+                entity.getIsSoldOut(),
+                entity.getImageUrl(),
                 entity.getAiDescription()
         );
     }

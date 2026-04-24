@@ -14,4 +14,7 @@ public interface MenuRepository {
 
     //특정 가게의 삭제/숨김 처리 안 된 메뉴 목록 조회
     List<MenuEntity> findVisibleMenusByStoreId(UUID storeId);
+
+    //검색용 메서드
+    List<MenuEntity> findVisibleMenusByStoreIdAndNameContaining(UUID storeId, String keyword);
 }

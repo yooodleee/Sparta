@@ -8,7 +8,7 @@
 
 | 도메인          | 설명        | PK                        |
 |--------------|-----------|---------------------------|
-| User         | 사용자/계정    | `username` (VARCHAR) — 예외 |
+| User         | 사용자/계정    | UUID (`username`은 UNIQUE) |
 | Area         | 운영 지역     | UUID                      |
 | Category     | 음식점 분류    | UUID                      |
 | Store        | 가게        | UUID                      |
@@ -71,7 +71,8 @@ PENDING → ACCEPTED → COOKING → DELIVERING → DELIVERED → COMPLETED
 | 주문 상태 변경      | ❌                   | ✅(본인 가게) | ✅       | ✅      |
 | 주문 취소(5분 내)   | ✅(본인)               | ❌        | ❌       | ✅      |
 | 리뷰 작성         | ✅(본인 주문, COMPLETED) | ❌        | ❌       | ❌      |
-| 사용자 관리        | ❌                   | ❌        | ✅       | ✅      |
+| 사용자 관리(대상 CUSTOMER·OWNER) | ❌    | ❌        | ✅       | ✅      |
+| 사용자 관리(대상 MANAGER·MASTER) | ❌    | ❌        | ❌(본인 제외) | ✅(본인 role 변경 제외) |
 | MANAGER 생성/삭제 | ❌                   | ❌        | ❌       | ✅      |
 | 카테고리/지역 관리    | ❌                   | ❌        | ✅       | ✅      |
 
@@ -129,22 +130,24 @@ PENDING → ACCEPTED → COOKING → DELIVERING → DELIVERED → COMPLETED
 - `request_text` 100자 이내
 - 서버가 prompt 끝에 `"답변을 최대한 간결하게 50자 이하로"` 자동 부착
 - 수정/삭제 불가 (insert-only)
+- 'is_applied=true'일 경우, 반드시 'menu_id'가 존재해야 함
 
 ## 6. 도메인 관계 요약
 
-| 관계                     | 카디널리티 | 비고       |
-|------------------------|-------|----------|
-| User(OWNER) ↔ Store    | 1:N   |          |
-| User(CUSTOMER) ↔ Order | 1:N   |          |
-| User ↔ Address         | 1:N   |          |
-| User ↔ AiRequestLog    | 1:N   |          |
-| Area ↔ Store           | 1:N   |          |
-| Category ↔ Store       | 1:N   |          |
-| Store ↔ Menu           | 1:N   |          |
-| Store ↔ Order          | 1:N   |          |
-| Store ↔ Review         | 1:N   | 역정규화     |
-| Order ↔ OrderItem      | 1:N   | 애그리거트 내부 |
-| Order ↔ Review         | 1:1   | UNIQUE   |
-| Order ↔ Payment        | 1:1   | UNIQUE   |
-| Menu ↔ OrderItem       | 1:N   |          |
-| Address ↔ Order        | 1:N   |          |
+| 관계                     | 카디널리티 | 비고                      |
+|------------------------|-------|-------------------------|
+| User(OWNER) ↔ Store    | 1:N   |                         |
+| User(CUSTOMER) ↔ Order | 1:N   |                         |
+| User ↔ Address         | 1:N   |                         |
+| User ↔ AiRequestLog    | 1:N   | 요청 주체 (누가 AI를 호출했는지)    |
+| Area ↔ Store           | 1:N   |                         |
+| Category ↔ Store       | 1:N   |                         |
+| Store ↔ Menu           | 1:N   |                         |
+| Store ↔ Order          | 1:N   |                         |
+| Store ↔ Review         | 1:N   | 역정규화                    |
+| Order ↔ OrderItem      | 1:N   | 애그리거트 내부                |
+| Order ↔ Review         | 1:1   | UNIQUE                  |
+| Order ↔ Payment        | 1:1   | UNIQUE                  |
+| Menu ↔ OrderItem       | 1:N   |                         |
+| Address ↔ Order        | 1:N   |                         |
+| Menu ↔ AiRequestLog    | 1:N   | 요청 대상(어떤 메뉴의 설명을 생성했는지) |
