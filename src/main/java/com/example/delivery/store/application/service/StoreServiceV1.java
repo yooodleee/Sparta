@@ -1,5 +1,6 @@
 package com.example.delivery.store.application.service;
 
+import com.example.delivery.area.domain.entity.AreaEntity;
 import com.example.delivery.area.domain.repository.AreaRepository;
 import com.example.delivery.category.domain.repository.CategoryRepository;
 import com.example.delivery.global.common.exception.BusinessException;
@@ -45,7 +46,7 @@ public class StoreServiceV1 {
         String phone = trimToNull(request.phone());
 
         validateCategoryExists(request.categoryId());
-        validateAreaExists(request.areaId());
+        validateAreaUsable(request.areaId());
         validateDuplicateStoreName(ownerId, storeName);
 
         StoreEntity store = StoreEntity.builder()
@@ -83,7 +84,7 @@ public class StoreServiceV1 {
         assertModifiable(store, principal);
 
         validateCategoryExists(request.categoryId());
-        validateAreaExists(request.areaId());
+        validateAreaUsable(request.areaId());
 
         String newName = request.name().trim();
         // 이름이 바뀌는 경우에만 동일 소유자 내 중복 검증 (자기 자신은 제외)
@@ -133,9 +134,12 @@ public class StoreServiceV1 {
         }
     }
 
-    private void validateAreaExists(UUID areaId) {
-        if (areaRepository.findById(areaId).isEmpty()) {
-            throw new RelatedAreaNotFoundException();
+    /** Area가 존재하고 활성 상태인지 검증 */
+    private void validateAreaUsable(UUID areaId) {
+        AreaEntity area = areaRepository.findById(areaId)
+                .orElseThrow(RelatedAreaNotFoundException::new);
+        if (!area.isActive()) {
+            throw new BusinessException(ErrorCode.AREA_INACTIVE);
         }
     }
 
