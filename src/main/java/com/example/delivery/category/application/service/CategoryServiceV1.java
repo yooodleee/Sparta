@@ -69,7 +69,11 @@ public class CategoryServiceV1 {
         CategoryEntity category = getCategoryEntity(categoryId);
 
         String categoryName = request.name().trim();
-        validateDuplicateCategoryName(categoryName);
+
+        // 이름이 변경된 경우에만 중복 검사를 수행하도록 함
+        if (!category.getName().equals(categoryName)) {
+            validateDuplicateCategoryName(categoryName);
+        }
 
         category.updateName(categoryName);
 
