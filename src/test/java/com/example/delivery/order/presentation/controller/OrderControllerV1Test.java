@@ -125,6 +125,7 @@ class OrderControllerV1Test {
         return new ResOrderDto(
                 ORDER_ID, customerId, STORE_ID, ADDRESS_ID,
                 OrderType.ONLINE, status, 40_000, "요청",
+                null, null, null,
                 List.of()
         );
     }

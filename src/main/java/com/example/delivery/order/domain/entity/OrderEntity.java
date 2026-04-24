@@ -55,6 +55,15 @@ public class OrderEntity extends BaseEntity {
     @Column(name = "request", columnDefinition = "TEXT")
     private String request;
 
+    @Column(name = "accepted_at")
+    private LocalDateTime acceptedAt;
+
+    @Column(name = "delivered_at")
+    private LocalDateTime deliveredAt;
+
+    @Column(name = "canceled_at")
+    private LocalDateTime canceledAt;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItemEntity> items = new ArrayList<>();
 
@@ -82,10 +91,12 @@ public class OrderEntity extends BaseEntity {
             throw new BusinessException(ErrorCode.ORDER_CANCEL_TIMEOUT);
         }
         this.status = OrderStatus.CANCELLED;
+        this.canceledAt = now;
     }
 
     public void cancelByMaster(){
         this.status = OrderStatus.CANCELLED;
+        this.canceledAt = LocalDateTime.now();
     }
 
     public void changeStatusByOwner(OrderStatus next){
@@ -94,6 +105,7 @@ public class OrderEntity extends BaseEntity {
                     "OWNER는 %s -> %s로 전이할 수 없습니다.".formatted(this.status, next));
         }
         this.status = next;
+        stampTransition(next);
     }
 
     public void changeStatusByManager(OrderStatus next){
@@ -102,10 +114,22 @@ public class OrderEntity extends BaseEntity {
                     "MANAGER는 주문을 취소할 수 없습니다. (현재: %s)".formatted(this.status));
         }
         this.status = next;
+        stampTransition(next);
     }
 
     public void changeStatusByMaster(OrderStatus next){
         this.status = next;
+        stampTransition(next);
+    }
+
+    private void stampTransition(OrderStatus next){
+        LocalDateTime now = LocalDateTime.now();
+        switch (next){
+            case ACCEPTED -> this.acceptedAt = now;
+            case DELIVERED -> this.deliveredAt = now;
+            case CANCELLED -> this.canceledAt = now;
+            default -> {}
+        }
     }
 
     public void updateRequest(String request){
