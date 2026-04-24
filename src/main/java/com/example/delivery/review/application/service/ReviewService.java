@@ -5,9 +5,11 @@ import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.infrastructure.security.UserPrincipal;
 import com.example.delivery.order.domain.entity.OrderEntity;
 import com.example.delivery.order.domain.entity.OrderStatus;
-import com.example.delivery.order.infrastructure.repository.OrderRepository;
+import com.example.delivery.order.domain.repository.OrderRepository;
 import com.example.delivery.review.domain.entity.ReviewEntity;
 import com.example.delivery.review.domain.repository.ReviewRepository;
+import com.example.delivery.store.domain.entity.StoreEntity;
+import com.example.delivery.store.domain.repository.StoreRepository;
 import com.example.delivery.review.presentation.dto.request.ReqCreateReviewDto;
 import com.example.delivery.review.presentation.dto.request.ReqUpdateReviewDto;
 import com.example.delivery.review.presentation.dto.response.ResReviewDto;
@@ -28,6 +30,7 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final OrderRepository orderRepository;
+    private final StoreRepository storeRepository;
 
     @Transactional
     public ResReviewDto createReview(UUID orderId, ReqCreateReviewDto request, UserPrincipal principal) {
@@ -60,10 +63,9 @@ public class ReviewService {
 
         ReviewEntity saved = reviewRepository.save(review);
 
-        // TODO: [Store 구현 이후] 가게 평균 평점 재집계
-        // recalculateAverageRating(storeId);
+        recalculateStoreRating(storeId);
 
-        // TODO: [Store/User 구현 이후] 실제 storeName, customerNickname 조회
+        // TODO: [User 구현 이후] 실제 storeName, customerNickname 조회
         return ResReviewDto.from(saved, "임시 가게명", "임시 닉네임");
     }
 
@@ -92,10 +94,9 @@ public class ReviewService {
 
         review.update(request.rating(), request.content());
 
-        // TODO: [Store 구현 이후] 가게 평균 평점 재집계
-        // recalculateAverageRating(review.getStoreId());
+        recalculateStoreRating(review.getStoreId());
 
-        // TODO: [Store/User 구현 이후] 실제 storeName, customerNickname 조회
+        // TODO: [User 구현 이후] 실제 storeName, customerNickname 조회
         return ResReviewDto.from(review, "임시 가게명", "임시 닉네임");
     }
 
@@ -111,7 +112,14 @@ public class ReviewService {
 
         review.delete(principal.username());
 
-        // TODO: [Store 구현 이후] 가게 평균 평점 재집계
-        // recalculateAverageRating(review.getStoreId());
+        recalculateStoreRating(review.getStoreId());
+    }
+
+    private void recalculateStoreRating(UUID storeId) {
+        StoreEntity store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+        List<Integer> ratings = reviewRepository.findRatingsByStoreId(storeId);
+        store.recalculateAverageRating(ratings);
+        storeRepository.save(store);
     }
 }
