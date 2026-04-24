@@ -73,10 +73,6 @@ public class StoreServiceV1 {
         return PageResponse.from(result);
     }
 
-    public ResGetStoreDto getStore(UUID storeId) {
-        return ResGetStoreDto.from(getStoreEntity(storeId));
-    }
-
     @Transactional
     public ResGetStoreDto updateStore(UUID storeId, ReqUpdateStoreDto request, UserPrincipal principal) {
 
@@ -178,5 +174,27 @@ public class StoreServiceV1 {
             return null;
         }
         return value.trim();
+    }
+
+    public ResGetStoreDto getStore(UUID storeId, UserPrincipal principal) {
+        StoreEntity store = getStoreEntity(storeId);
+
+        /**
+         * CUSTOMER / 비인증 사용자에게는 숨김 가게를 미존재로 취급
+         * OWNER / MANAGER / MASTER 는 관리/운영을 위해 그대로 조회 가능
+         */
+        if (store.isHidden() && !canSeeHiddenStore(principal)) {
+            throw new StoreNotFoundException();
+        }
+
+        return ResGetStoreDto.from(store);
+    }
+
+    private boolean canSeeHiddenStore(UserPrincipal principal) {
+        if (principal == null) {
+            return false;
+        }
+        UserRole role = principal.role();
+        return role == UserRole.OWNER || role == UserRole.MANAGER || role == UserRole.MASTER;
     }
 }
