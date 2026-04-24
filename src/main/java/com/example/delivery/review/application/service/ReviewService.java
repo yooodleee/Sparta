@@ -12,9 +12,11 @@ import com.example.delivery.review.presentation.dto.request.ReqCreateReviewDto;
 import com.example.delivery.review.presentation.dto.request.ReqUpdateReviewDto;
 import com.example.delivery.review.presentation.dto.response.ResReviewDto;
 import com.example.delivery.user.domain.entity.UserRole;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,10 +67,15 @@ public class ReviewService {
         return ResReviewDto.from(saved, "임시 가게명", "임시 닉네임");
     }
 
+    private static final List<Integer> ALLOWED_PAGE_SIZES = List.of(10, 30, 50);
+
     public Page<ResReviewDto> getReviewsByStore(UUID storeId, Integer rating, Pageable pageable) {
+        int size = ALLOWED_PAGE_SIZES.contains(pageable.getPageSize()) ? pageable.getPageSize() : 10;
+        Pageable validatedPageable = PageRequest.of(pageable.getPageNumber(), size, pageable.getSort());
+
         Page<ReviewEntity> reviews = (rating != null)
-                ? reviewRepository.findByStoreIdAndRating(storeId, rating, pageable)
-                : reviewRepository.findByStoreId(storeId, pageable);
+                ? reviewRepository.findByStoreIdAndRating(storeId, rating, validatedPageable)
+                : reviewRepository.findByStoreId(storeId, validatedPageable);
 
         // TODO: [Store/User 구현 이후] 실제 storeName, customerNickname 조회
         return reviews.map(r -> ResReviewDto.from(r, "임시 가게명", "임시 닉네임"));
