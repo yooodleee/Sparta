@@ -21,8 +21,4 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, UUID>, 
 
     @Query("SELECT r.rating FROM ReviewEntity r WHERE r.storeId = :storeId AND r.deletedAt IS NULL")
     List<Integer> findRatingsByStoreId(@Param("storeId") UUID storeId);
-
-    // 리뷰 평균 평점 갱신
-    @Query("SELECT AVG(r.rating) FROM ReviewEntity r WHERE r.storeId = :storeId")
-    Optional<Double> calculateAverageRating(@Param("storeId") UUID storeId);
 }

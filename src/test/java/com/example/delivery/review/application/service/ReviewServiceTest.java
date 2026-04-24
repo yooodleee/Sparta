@@ -20,7 +20,11 @@ import com.example.delivery.review.presentation.dto.request.ReqCreateReviewDto;
 import com.example.delivery.review.presentation.dto.request.ReqUpdateReviewDto;
 import com.example.delivery.store.domain.entity.StoreEntity;
 import com.example.delivery.store.domain.repository.StoreRepository;
+import com.example.delivery.user.domain.entity.UserEntity;
 import com.example.delivery.user.domain.entity.UserRole;
+import com.example.delivery.user.domain.repository.UserRepository;
+import com.example.delivery.user.domain.vo.Email;
+import com.example.delivery.user.domain.vo.Username;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,6 +42,7 @@ class ReviewServiceTest {
     @Mock ReviewRepository reviewRepository;
     @Mock OrderRepository  orderRepository;
     @Mock StoreRepository  storeRepository;
+    @Mock UserRepository   userRepository;
 
     @InjectMocks ReviewService reviewService;
 
@@ -154,11 +159,16 @@ class ReviewServiceTest {
                     .phone("010-0000-0000")
                     .build();
 
+            UserEntity customer = UserEntity.register(
+                    new Username(principal.username()), "테스터",
+                    new Email("tester@test.com"), "hash", UserRole.CUSTOMER);
+
             given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(order));
             given(reviewRepository.existsByOrderId(ORDER_ID)).willReturn(false);
             given(reviewRepository.save(any())).willReturn(savedReview);
             given(storeRepository.findById(STORE_ID)).willReturn(Optional.of(store));
             given(reviewRepository.findRatingsByStoreId(STORE_ID)).willReturn(List.of(5));
+            given(userRepository.findByUsername(principal.username())).willReturn(Optional.of(customer));
 
             // when
             reviewService.createReview(ORDER_ID, validRequest(), principal);
@@ -220,8 +230,13 @@ class ReviewServiceTest {
                     .phone("010-0000-0000")
                     .build();
 
+            UserEntity customer = UserEntity.register(
+                    new Username(principal.username()), "테스터",
+                    new Email("tester@test.com"), "hash", UserRole.CUSTOMER);
+
             given(storeRepository.findById(STORE_ID)).willReturn(Optional.of(store));
             given(reviewRepository.findRatingsByStoreId(STORE_ID)).willReturn(List.of(3));
+            given(userRepository.findByUsername(principal.username())).willReturn(Optional.of(customer));
 
             // when
             reviewService.updateReview(REVIEW_ID, new ReqUpdateReviewDto(3, "다시 생각해보니 보통이에요"), principal);
@@ -249,8 +264,13 @@ class ReviewServiceTest {
                     .phone("010-0000-0000")
                     .build();
 
+            UserEntity customer = UserEntity.register(
+                    new Username(principal.username()), "테스터",
+                    new Email("tester@test.com"), "hash", UserRole.CUSTOMER);
+
             given(storeRepository.findById(STORE_ID)).willReturn(Optional.of(store));
             given(reviewRepository.findRatingsByStoreId(STORE_ID)).willReturn(List.of(5, 3, 4));
+            given(userRepository.findByUsername(principal.username())).willReturn(Optional.of(customer));
 
             // when
             reviewService.updateReview(REVIEW_ID, new ReqUpdateReviewDto(4, "수정"), principal);
@@ -277,8 +297,13 @@ class ReviewServiceTest {
                     .phone("010-0000-0000")
                     .build();
 
+            UserEntity customer = UserEntity.register(
+                    new Username(principal.username()), "테스터",
+                    new Email("tester@test.com"), "hash", UserRole.CUSTOMER);
+
             given(storeRepository.findById(STORE_ID)).willReturn(Optional.of(store));
             given(reviewRepository.findRatingsByStoreId(STORE_ID)).willReturn(List.of(5, 4));
+            given(userRepository.findByUsername(principal.username())).willReturn(Optional.of(customer));
 
             // when
             reviewService.updateReview(REVIEW_ID, new ReqUpdateReviewDto(4, "수정"), principal);
@@ -305,8 +330,13 @@ class ReviewServiceTest {
                     .phone("010-0000-0000")
                     .build();
 
+            UserEntity customer = UserEntity.register(
+                    new Username(principal.username()), "테스터",
+                    new Email("tester@test.com"), "hash", UserRole.CUSTOMER);
+
             given(storeRepository.findById(STORE_ID)).willReturn(Optional.of(store));
             given(reviewRepository.findRatingsByStoreId(STORE_ID)).willReturn(List.of(5, 5, 4));
+            given(userRepository.findByUsername(principal.username())).willReturn(Optional.of(customer));
 
             // when
             reviewService.updateReview(REVIEW_ID, new ReqUpdateReviewDto(4, "수정"), principal);

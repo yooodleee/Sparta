@@ -20,6 +20,4 @@ public interface ReviewRepository {
     Page<ReviewEntity> findByStoreId(UUID storeId, Pageable pageable);
 
     Page<ReviewEntity> findByStoreIdAndRating(UUID storeId, int rating, Pageable pageable);
-
-    Optional<Double> calculateAverageRating(UUID storeId);
 }
