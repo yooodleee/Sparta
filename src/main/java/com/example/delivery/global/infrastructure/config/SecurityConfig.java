@@ -66,8 +66,6 @@ public class SecurityConfig {
                         .requestMatchers(PUBLIC_PATHS).permitAll()
                         .requestMatchers("/api/v1/test/me").authenticated()
                         .requestMatchers("/api/v1/users/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/orders/*/reviews").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/reviews/*").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/orders/*/reviews").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/reviews/*").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/reviews/*").authenticated()
