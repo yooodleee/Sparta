@@ -41,9 +41,9 @@ import org.springframework.web.bind.annotation.RestController;
  * 올바른 서비스 메서드로 디스패치(허용되지 않은 role은 403 FORBIDDEN.)
  *
  * [본인 확인]
- * CUSTOMER가 본인 주문에만 접근하도록 {@link #verifyOwner}가 {@code getOrder}로 주문을
- * 다시 조회해 {@code customerId}를 비교한다. 서비스 쪽 쓰기 트랜잭션 전에 한 번 더 조회가
- * 발생하므로 향후 서비스/엔티티 쪽으로 이 검증을 내리면 호출 1회로 줄일 수 있다.
+ * CUSTOMER 전용 경로(cancelByCustomer / updateRequestByCustomer)에서는 요청자의 username을
+ * 서비스로 그대로 전달하고, {@link com.example.delivery.order.domain.entity.OrderEntity}가
+ * {@code customerId}와 비교해 FORBIDDEN을 던진다. 컨트롤러는 role 디스패치만 담당.
  *
  * [응답 규약]
  * 모든 응답은 {@link ApiResponse}로 감싸며, 예외는 GlobalExceptionHandler에서 공통 포맷으로
@@ -112,10 +112,7 @@ public class OrderControllerV1 {
     ) {
         return switch (principal.role()) {
             case MASTER -> ApiResponse.ok(orderService.cancelByMaster(orderId));
-            case CUSTOMER -> {
-                verifyOwner(orderId, principal);
-                yield ApiResponse.ok(orderService.cancelByCustomer(orderId));
-            }
+            case CUSTOMER -> ApiResponse.ok(orderService.cancelByCustomer(orderId, principal.username()));
             default -> throw new BusinessException(ErrorCode.FORBIDDEN);
         };
     }
@@ -160,28 +157,17 @@ public class OrderControllerV1 {
             @RequestBody @Valid ReqUpdateRequestDto request,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        if (principal.role() == UserRole.CUSTOMER) {
-            verifyOwner(orderId, principal);
-        } else if (principal.role() != UserRole.MASTER) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
-        }
-        return ApiResponse.ok(orderService.updateRequest(orderId, request.request()));
+        return switch (principal.role()) {
+            case CUSTOMER -> ApiResponse.ok(
+                    orderService.updateRequestByCustomer(orderId, principal.username(), request.request()));
+            case MASTER -> ApiResponse.ok(orderService.updateRequestByMaster(orderId, request.request()));
+            default -> throw new BusinessException(ErrorCode.FORBIDDEN);
+        };
     }
 
     /** 특정 단일 role만 허용. 위반 시 403. */
     private void requireRole(UserPrincipal principal, UserRole expected) {
         if (principal.role() != expected) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
-        }
-    }
-
-    /**
-     * 주문의 {@code customerId}가 요청자의 {@code username}과 일치하는지 확인한다.
-     * 불일치 시 403. 주문이 없으면 {@code getOrder}에서 ORDER_NOT_FOUND(404)로 먼저 종료된다.
-     */
-    private void verifyOwner(UUID orderId, UserPrincipal principal) {
-        ResOrderDto order = orderService.getOrder(orderId);
-        if (!order.customerId().equals(principal.username())) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
     }

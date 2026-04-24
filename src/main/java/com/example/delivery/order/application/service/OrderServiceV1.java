@@ -87,13 +87,13 @@ public class OrderServiceV1 {
 
     /**
      * CUSTOMER 주문 취소.
-     * PENDING 상태 + 생성 후 5분 이내 조건을 OrderEntity가 검증한다.
+     * 본인 여부 + PENDING 상태 + 생성 후 5분 이내 조건을 OrderEntity가 검증한다.
      * Clock을 주입하는 이유는 단위 테스트에서 시간을 고정하기 위함 (현재는 시스템 시계 사용).
      */
     @Transactional
-    public ResOrderDto cancelByCustomer(UUID orderId) {
+    public ResOrderDto cancelByCustomer(UUID orderId, String customerId) {
         OrderEntity order = findOrder(orderId);
-        order.cancelByCustomer(Clock.systemDefaultZone());
+        order.cancelByCustomer(customerId, Clock.systemDefaultZone());
         return ResOrderDto.from(order);
     }
 
@@ -133,12 +133,22 @@ public class OrderServiceV1 {
     }
 
     /**
-     * 요청사항 수정.
-     * PENDING 상태에서만 가능 — 조리가 시작된 이후에는 변경 불가.
-     * (CUSTOMER/MASTER 권한 분기는 Controller 계층에서 처리 예정)
+     * CUSTOMER 요청사항 수정.
+     * 본인 여부 + PENDING 상태 조건을 OrderEntity가 검증한다.
      */
     @Transactional
-    public ResOrderDto updateRequest(UUID orderId, String request) {
+    public ResOrderDto updateRequestByCustomer(UUID orderId, String customerId, String request) {
+        OrderEntity order = findOrder(orderId);
+        order.updateRequestByCustomer(customerId, request);
+        return ResOrderDto.from(order);
+    }
+
+    /**
+     * MASTER 요청사항 수정.
+     * PENDING 상태 조건만 검증, 본인 확인은 생략.
+     */
+    @Transactional
+    public ResOrderDto updateRequestByMaster(UUID orderId, String request) {
         OrderEntity order = findOrder(orderId);
         order.updateRequest(request);
         return ResOrderDto.from(order);

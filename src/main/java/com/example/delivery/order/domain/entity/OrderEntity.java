@@ -81,7 +81,8 @@ public class OrderEntity extends BaseEntity {
         item.assignOrder(this);
     }
 
-    public void cancelByCustomer(Clock clock){
+    public void cancelByCustomer(String requesterId, Clock clock){
+        verifyCustomer(requesterId);
         if(this.status != OrderStatus.PENDING){
             throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS,
                     "PENDING 상태에서만 취소 가능합니다. (현재: %s)".formatted(this.status));
@@ -132,11 +133,23 @@ public class OrderEntity extends BaseEntity {
         }
     }
 
+    public void updateRequestByCustomer(String requesterId, String request){
+        verifyCustomer(requesterId);
+        updateRequest(request);
+    }
+
     public void updateRequest(String request){
         if(this.status != OrderStatus.PENDING){
             throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS,
                     "PENDING 상태에서만 요청사항을 수정할 수 있습니다. (현재: %s)".formatted(this.status));
         }
         this.request = request;
+    }
+
+    private void verifyCustomer(String requesterId){
+        if(!this.customerId.equals(requesterId)){
+            throw new BusinessException(ErrorCode.FORBIDDEN,
+                    "본인 주문만 처리할 수 있습니다.");
+        }
     }
 }

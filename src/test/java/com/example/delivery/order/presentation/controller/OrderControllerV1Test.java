@@ -257,10 +257,8 @@ class OrderControllerV1Test {
         @Test
         @DisplayName("성공 — CUSTOMER 본인")
         void customerOwner_success() throws Exception {
-            // verifyOwner가 getOrder로 customerId를 검증하므로 getOrder도 스텁 필요
-            given(orderService.getOrder(ORDER_ID))
-                    .willReturn(sampleOrder(CUSTOMER_NAME, OrderStatus.PENDING));
-            given(orderService.cancelByCustomer(ORDER_ID))
+            // principal.username() 이 서비스 인자로 그대로 전달되고, 엔티티가 본인 확인을 수행
+            given(orderService.cancelByCustomer(ORDER_ID, CUSTOMER_NAME))
                     .willReturn(sampleOrder(CUSTOMER_NAME, OrderStatus.CANCELLED));
 
             mockMvc.perform(post("/api/v1/orders/{orderId}/cancel", ORDER_ID)
@@ -273,9 +271,9 @@ class OrderControllerV1Test {
         @Test
         @DisplayName("실패 — CUSTOMER 타인 주문 403")
         void customerOther_forbidden() throws Exception {
-            // getOrder가 cust01 소유를 반환 → 요청자는 other → verifyOwner에서 FORBIDDEN
-            given(orderService.getOrder(ORDER_ID))
-                    .willReturn(sampleOrder(CUSTOMER_NAME, OrderStatus.PENDING));
+            // 요청자는 other → 엔티티의 verifyCustomer 가 FORBIDDEN 을 던짐
+            given(orderService.cancelByCustomer(ORDER_ID, "other"))
+                    .willThrow(new BusinessException(ErrorCode.FORBIDDEN));
 
             mockMvc.perform(post("/api/v1/orders/{orderId}/cancel", ORDER_ID)
                             .with(authentication(auth(otherUser)))
@@ -323,9 +321,7 @@ class OrderControllerV1Test {
         @DisplayName("실패 — CUSTOMER 5분 초과 시 400")
         void customer_timeout() throws Exception {
             // 본인 확인은 통과하지만 엔티티에서 ORDER_CANCEL_TIMEOUT 발생
-            given(orderService.getOrder(ORDER_ID))
-                    .willReturn(sampleOrder(CUSTOMER_NAME, OrderStatus.PENDING));
-            given(orderService.cancelByCustomer(ORDER_ID))
+            given(orderService.cancelByCustomer(ORDER_ID, CUSTOMER_NAME))
                     .willThrow(new BusinessException(ErrorCode.ORDER_CANCEL_TIMEOUT));
 
             mockMvc.perform(post("/api/v1/orders/{orderId}/cancel", ORDER_ID)
@@ -432,9 +428,7 @@ class OrderControllerV1Test {
         @Test
         @DisplayName("성공 — CUSTOMER 본인")
         void customerOwner_success() throws Exception {
-            given(orderService.getOrder(ORDER_ID))
-                    .willReturn(sampleOrder(CUSTOMER_NAME, OrderStatus.PENDING));
-            given(orderService.updateRequest(ORDER_ID, "수정"))
+            given(orderService.updateRequestByCustomer(ORDER_ID, CUSTOMER_NAME, "수정"))
                     .willReturn(sampleOrder(CUSTOMER_NAME, OrderStatus.PENDING));
 
             mockMvc.perform(patch("/api/v1/orders/{orderId}/request", ORDER_ID)
@@ -448,9 +442,9 @@ class OrderControllerV1Test {
         @Test
         @DisplayName("실패 — CUSTOMER 타인 주문 403")
         void customerOther_forbidden() throws Exception {
-            // 본인 확인 실패 → 서비스 updateRequest 호출 없이 FORBIDDEN
-            given(orderService.getOrder(ORDER_ID))
-                    .willReturn(sampleOrder(CUSTOMER_NAME, OrderStatus.PENDING));
+            // 엔티티의 verifyCustomer 가 FORBIDDEN 을 던짐
+            given(orderService.updateRequestByCustomer(ORDER_ID, "other", "수정"))
+                    .willThrow(new BusinessException(ErrorCode.FORBIDDEN));
 
             mockMvc.perform(patch("/api/v1/orders/{orderId}/request", ORDER_ID)
                             .with(authentication(auth(otherUser)))
@@ -463,8 +457,8 @@ class OrderControllerV1Test {
         @Test
         @DisplayName("성공 — MASTER 는 타인 주문도 수정")
         void master_success() throws Exception {
-            // MASTER는 verifyOwner를 건너뛰고 바로 updateRequest 호출
-            given(orderService.updateRequest(ORDER_ID, "수정"))
+            // MASTER는 본인 확인을 생략하는 전용 서비스 메서드로 바로 진입
+            given(orderService.updateRequestByMaster(ORDER_ID, "수정"))
                     .willReturn(sampleOrder(CUSTOMER_NAME, OrderStatus.PENDING));
 
             mockMvc.perform(patch("/api/v1/orders/{orderId}/request", ORDER_ID)
@@ -497,10 +491,8 @@ class OrderControllerV1Test {
         @Test
         @DisplayName("실패 — PENDING 아니면 400")
         void notPending() throws Exception {
-            // 본인 확인은 통과, 엔티티 레벨에서 PENDING 아님 → INVALID_ORDER_STATUS
-            given(orderService.getOrder(ORDER_ID))
-                    .willReturn(sampleOrder(CUSTOMER_NAME, OrderStatus.COOKING));
-            given(orderService.updateRequest(ORDER_ID, "수정"))
+            // 엔티티 레벨에서 PENDING 아님 → INVALID_ORDER_STATUS
+            given(orderService.updateRequestByCustomer(ORDER_ID, CUSTOMER_NAME, "수정"))
                     .willThrow(new BusinessException(ErrorCode.INVALID_ORDER_STATUS));
 
             mockMvc.perform(patch("/api/v1/orders/{orderId}/request", ORDER_ID)
