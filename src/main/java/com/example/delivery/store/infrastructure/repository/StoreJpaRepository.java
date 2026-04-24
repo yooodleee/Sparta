@@ -11,4 +11,8 @@ public interface StoreJpaRepository extends JpaRepository<StoreEntity, UUID>, St
     Optional<StoreEntity> findByIdAndDeletedAtIsNull(UUID id);
 
     Optional<StoreEntity> findByOwnerIdAndNameAndDeletedAtIsNull(UUID ownerId, String name);
+
+    boolean existsByCategoryIdAndDeletedAtIsNull(UUID categoryId);
+
+    boolean existsByAreaIdAndDeletedAtIsNull(UUID areaId);
 }

@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface CategoryJpaRepository extends JpaRepository<CategoryEntity, UUID> {
 
-    Optional<CategoryEntity> findByName(String name);
+    Optional<CategoryEntity> findByNameAndDeletedAtIsNull(String name);
 
     Optional<CategoryEntity> findByNameAndDeletedAtIsNotNull(String name);
 

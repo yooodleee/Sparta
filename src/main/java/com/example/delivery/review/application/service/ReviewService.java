@@ -3,15 +3,20 @@ package com.example.delivery.review.application.service;
 import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.infrastructure.security.UserPrincipal;
+import com.example.delivery.order.domain.entity.OrderEntity;
+import com.example.delivery.order.domain.entity.OrderStatus;
+import com.example.delivery.order.infrastructure.repository.OrderRepository;
 import com.example.delivery.review.domain.entity.ReviewEntity;
 import com.example.delivery.review.domain.repository.ReviewRepository;
 import com.example.delivery.review.presentation.dto.request.ReqCreateReviewDto;
 import com.example.delivery.review.presentation.dto.request.ReqUpdateReviewDto;
 import com.example.delivery.review.presentation.dto.response.ResReviewDto;
 import com.example.delivery.user.domain.entity.UserRole;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,32 +27,28 @@ import org.springframework.transaction.annotation.Transactional;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final OrderRepository orderRepository;
 
     @Transactional
     public ResReviewDto createReview(UUID orderId, ReqCreateReviewDto request, UserPrincipal principal) {
 
-        // TODO: [Order 구현 이후] orderId로 Order 조회
-        // OrderEntity order = orderRepository.findById(orderId)
-        //         .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
-        // TODO: [Order 구현 이후] 주문 완료 상태 검증
-        // if (order.getStatus() != OrderStatus.COMPLETED) {
-        //     throw new BusinessException(ErrorCode.ORDER_NOT_COMPLETED);
-        // }
+        if (order.getStatus() != OrderStatus.COMPLETED) {
+            throw new BusinessException(ErrorCode.ORDER_NOT_COMPLETED);
+        }
 
-        // TODO: [Order 구현 이후] 본인 주문 여부 검증
-        // if (!order.getCustomerId().equals(principal.username())) {
-        //     throw new BusinessException(ErrorCode.FORBIDDEN);
-        // }
+        if (!order.getCustomerId().equals(principal.username())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
 
         // 1주문 1리뷰 중복 검증
         if (reviewRepository.existsByOrderId(orderId)) {
             throw new BusinessException(ErrorCode.DUPLICATE_REVIEW);
         }
 
-        // TODO: [Order 구현 이후] storeId는 Order 엔티티에서 추출
-        // UUID storeId = order.getStoreId();
-        UUID storeId = request.storeId();
+        UUID storeId = order.getStoreId();
 
         ReviewEntity review = ReviewEntity.builder()
                 .orderId(orderId)
@@ -66,10 +67,15 @@ public class ReviewService {
         return ResReviewDto.from(saved, "임시 가게명", "임시 닉네임");
     }
 
+    private static final List<Integer> ALLOWED_PAGE_SIZES = List.of(10, 30, 50);
+
     public Page<ResReviewDto> getReviewsByStore(UUID storeId, Integer rating, Pageable pageable) {
+        int size = ALLOWED_PAGE_SIZES.contains(pageable.getPageSize()) ? pageable.getPageSize() : 10;
+        Pageable validatedPageable = PageRequest.of(pageable.getPageNumber(), size, pageable.getSort());
+
         Page<ReviewEntity> reviews = (rating != null)
-                ? reviewRepository.findByStoreIdAndRating(storeId, rating, pageable)
-                : reviewRepository.findByStoreId(storeId, pageable);
+                ? reviewRepository.findByStoreIdAndRating(storeId, rating, validatedPageable)
+                : reviewRepository.findByStoreId(storeId, validatedPageable);
 
         // TODO: [Store/User 구현 이후] 실제 storeName, customerNickname 조회
         return reviews.map(r -> ResReviewDto.from(r, "임시 가게명", "임시 닉네임"));

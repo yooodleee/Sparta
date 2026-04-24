@@ -324,7 +324,7 @@ class StoreServiceV1Test {
             given(storeRepository.findById(storeId)).willReturn(Optional.of(store));
 
             // when
-            ResGetStoreDto result = storeService.getStore(storeId);
+            ResGetStoreDto result = storeService.getStore(storeId, null);
 
             // then
             assertThat(result.storeId()).isEqualTo(storeId);
@@ -340,7 +340,7 @@ class StoreServiceV1Test {
             given(storeRepository.findById(storeId)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> storeService.getStore(storeId))
+            assertThatThrownBy(() -> storeService.getStore(storeId, null))
                     .isInstanceOf(StoreNotFoundException.class);
         }
     }
