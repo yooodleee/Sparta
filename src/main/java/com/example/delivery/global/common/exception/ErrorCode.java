@@ -27,6 +27,8 @@ public enum ErrorCode {
     DUPLICATE_USERNAME(HttpStatus.CONFLICT, "이미 사용 중인 아이디입니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
     CANNOT_DELETE_SELF(HttpStatus.BAD_REQUEST, "자기 자신은 삭제할 수 없습니다."),
+    CURRENT_PASSWORD_REQUIRED(HttpStatus.BAD_REQUEST, "비밀번호 변경 시 현재 비밀번호가 필요합니다."),
+    INVALID_CURRENT_PASSWORD(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 일치하지 않습니다."),
 
     //Menu
     MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다."),

@@ -36,7 +36,11 @@ public class SecurityConfig {
             "/actuator/info",
             "/error",
             "/api/v1/test/users",
-            "/api/v1/auth/**"
+            "/api/v1/auth/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/v3/api-docs",
+            "/v3/api-docs/**"
     };
 
     private final JwtTokenProvider jwtTokenProvider;
