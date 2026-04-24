@@ -73,6 +73,18 @@ public class ReviewService {
         return ResReviewDto.from(saved, store.getName(), customer.getNickname());
     }
 
+    public ResReviewDto getReview(UUID reviewId) {
+        ReviewEntity review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+
+        StoreEntity store = storeRepository.findById(review.getStoreId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+        UserEntity customer = userRepository.findByUsername(review.getCustomerId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        return ResReviewDto.from(review, store.getName(), customer.getNickname());
+    }
+
     private static final List<Integer> ALLOWED_PAGE_SIZES = List.of(10, 30, 50);
 
     public Page<ResReviewDto> getReviewsByStore(UUID storeId, Integer rating, Pageable pageable) {
