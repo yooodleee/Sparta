@@ -1,6 +1,7 @@
 package com.example.delivery.order.domain.repository;
 
 import com.example.delivery.order.domain.entity.OrderEntity;
+import com.example.delivery.order.domain.entity.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,5 +14,5 @@ public interface OrderRepository {
 
     Optional<OrderEntity> findById(UUID orderId);
 
-    Page<OrderEntity> findAll(Pageable pageable);
+    Page<OrderEntity> search(String customerId, UUID storeId, OrderStatus status, Pageable pageable);
 }

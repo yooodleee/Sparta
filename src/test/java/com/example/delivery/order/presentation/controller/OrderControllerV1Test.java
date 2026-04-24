@@ -234,17 +234,38 @@ class OrderControllerV1Test {
     class GetOrders {
 
         @Test
-        @DisplayName("성공 — 페이지 반환")
-        void success() throws Exception {
-            // Page<ResOrderDto>가 JSON 직렬화되어 totalElements가 내려오는지 확인
+        @DisplayName("성공 — MASTER 는 customerId 필터 없이 전체 조회")
+        void master_success() throws Exception {
             Page<ResOrderDto> page = new PageImpl<>(
                     List.of(sampleOrder(CUSTOMER_NAME, OrderStatus.PENDING)),
                     PageRequest.of(0, 10), 1);
-            given(orderService.getOrders(any())).willReturn(page);
+            // MASTER → customerIdFilter = null
+            given(orderService.getOrders(eq(null), eq(null), eq(null), any())).willReturn(page);
 
-            mockMvc.perform(get("/api/v1/orders"))
+            mockMvc.perform(get("/api/v1/orders")
+                            .with(authentication(auth(master))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.totalElements").value(1));
+        }
+
+        @Test
+        @DisplayName("성공 — CUSTOMER 는 customerId 가 본인으로 강제 주입")
+        void customer_filtersByOwnUsername() throws Exception {
+            Page<ResOrderDto> page = new PageImpl<>(
+                    List.of(sampleOrder(CUSTOMER_NAME, OrderStatus.PENDING)),
+                    PageRequest.of(0, 10), 1);
+            given(orderService.getOrders(eq(CUSTOMER_NAME), eq(null), eq(null), any())).willReturn(page);
+
+            mockMvc.perform(get("/api/v1/orders")
+                            .with(authentication(auth(customer))))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("실패 — 인증 없으면 403")
+        void unauthenticated_forbidden() throws Exception {
+            mockMvc.perform(get("/api/v1/orders"))
+                    .andExpect(status().isForbidden());
         }
     }
 

@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -87,12 +88,28 @@ public class OrderControllerV1 {
     }
 
 
-    @Operation(summary = "주문 목록 조회", description = "페이지네이션으로 주문 목록을 조회합니다.")
+    @Operation(summary = "주문 목록 조회",
+            description = "storeId / status 필터 + 페이지네이션. CUSTOMER 는 본인 주문만 조회되며, OWNER/MANAGER/MASTER 는 필터 자유.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음")
+    })
     @GetMapping
     public ApiResponse<Page<ResOrderDto>> getOrders(
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            @Parameter(description = "가게 ID 필터") @RequestParam(required = false) UUID storeId,
+            @Parameter(description = "주문 상태 필터") @RequestParam(required = false) OrderStatus status,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal UserPrincipal principal
     ) {
-        return ApiResponse.ok(orderService.getOrders(pageable));
+        if (principal == null) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        String customerIdFilter = switch (principal.role()) {
+            case CUSTOMER -> principal.username();
+            case OWNER, MANAGER, MASTER -> null;
+        };
+        return ApiResponse.ok(orderService.getOrders(customerIdFilter, storeId, status, pageable));
     }
 
 

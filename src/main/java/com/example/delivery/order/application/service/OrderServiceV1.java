@@ -80,9 +80,9 @@ public class OrderServiceV1 {
         return ResOrderDto.from(findOrder(orderId));
     }
 
-    /** 목록 조회 — 페이지네이션 지원. */
-    public Page<ResOrderDto> getOrders(Pageable pageable) {
-        return orderRepository.findAll(pageable).map(ResOrderDto::from);
+    /** 목록 조회 — customerId / storeId / status 조건을 선택적으로 적용 (QueryDSL). */
+    public Page<ResOrderDto> getOrders(String customerId, UUID storeId, OrderStatus status, Pageable pageable) {
+        return orderRepository.search(customerId, storeId, status, pageable).map(ResOrderDto::from);
     }
 
     /**
