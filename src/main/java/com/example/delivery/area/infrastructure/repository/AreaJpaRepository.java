@@ -12,7 +12,7 @@ public interface AreaJpaRepository extends JpaRepository<AreaEntity, UUID> {
 
     Optional<AreaEntity> findByNameAndDeletedAtIsNotNull(String name);
 
-    Optional<AreaEntity> findByName(String name);
+    Optional<AreaEntity> findByNameAndDeletedAtIsNull(String name);
 
     Optional<AreaEntity> findByIdAndDeletedAtIsNull(UUID id);
 
