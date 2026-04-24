@@ -13,7 +13,7 @@ import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.infrastructure.security.UserPrincipal;
 import com.example.delivery.order.domain.entity.OrderEntity;
 import com.example.delivery.order.domain.entity.OrderStatus;
-import com.example.delivery.order.infrastructure.repository.OrderRepository;
+import com.example.delivery.order.domain.repository.OrderRepository;
 import com.example.delivery.review.domain.entity.ReviewEntity;
 import com.example.delivery.review.domain.repository.ReviewRepository;
 import com.example.delivery.review.presentation.dto.request.ReqCreateReviewDto;
@@ -40,7 +40,7 @@ class ReviewServiceTest {
     private static final UUID STORE_ID = UUID.randomUUID();
 
     private final UserPrincipal principal =
-            new UserPrincipal(1L, "testuser", UserRole.CUSTOMER);
+            new UserPrincipal(UUID.randomUUID(), "testuser", UserRole.CUSTOMER);
 
     private ReqCreateReviewDto validRequest() {
         return new ReqCreateReviewDto(5, "맛있었어요!");

@@ -5,7 +5,7 @@ import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.global.infrastructure.security.UserPrincipal;
 import com.example.delivery.order.domain.entity.OrderEntity;
 import com.example.delivery.order.domain.entity.OrderStatus;
-import com.example.delivery.order.infrastructure.repository.OrderRepository;
+import com.example.delivery.order.domain.repository.OrderRepository;
 import com.example.delivery.review.domain.entity.ReviewEntity;
 import com.example.delivery.review.domain.repository.ReviewRepository;
 import com.example.delivery.review.presentation.dto.request.ReqCreateReviewDto;
