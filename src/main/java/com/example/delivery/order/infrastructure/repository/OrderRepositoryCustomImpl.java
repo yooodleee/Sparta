@@ -58,7 +58,7 @@ public class OrderRepositoryCustomImpl implements OrderRepositoryCustom {
     }
 
     /**
-     * 조건 조립 (null 이면 조건 자체를 제외)
+     * 조건 조립 (null이면 조건 자체를 제외)
      */
     private BooleanExpression notDeleted() {
         return ORDER.deletedAt.isNull();
