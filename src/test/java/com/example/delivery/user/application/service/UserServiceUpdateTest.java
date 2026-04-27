@@ -54,7 +54,7 @@ class UserServiceUpdateTest {
     @Test
     @DisplayName("본인은 nickname/email/password/isPublic 모두 수정 가능 (currentPassword 일치)")
     void self_canUpdateAll() {
-        given(userRepository.existsByEmailExcept(any(), any())).willReturn(false);
+        given(userRepository.existsByEmailExceptIncludingDeleted(any(), any())).willReturn(false);
         given(passwordEncoder.matches("OldPass1!", "hash")).willReturn(true);
         given(passwordEncoder.encode("Abcd1234!")).willReturn("new-hash");
 
@@ -189,7 +189,7 @@ class UserServiceUpdateTest {
     @Test
     @DisplayName("본인이 중복 email(다른 사용자 사용 중)로 수정 시 409")
     void self_duplicateEmail() {
-        given(userRepository.existsByEmailExcept("taken@mail.co", "alice")).willReturn(true);
+        given(userRepository.existsByEmailExceptIncludingDeleted("taken@mail.co", "alice")).willReturn(true);
         ReqUpdateUser req = new ReqUpdateUser(null, "taken@mail.co", null, null, null);
         LoginUser me = new LoginUser(UUID.randomUUID(), "alice", UserRole.CUSTOMER);
 

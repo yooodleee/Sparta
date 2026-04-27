@@ -15,11 +15,13 @@ public interface UserRepository {
 
     Optional<UserEntity> findByUsername(String username);
 
-    boolean existsByUsername(String username);
+    // soft-deleted 까지 포함하여 점유 여부를 확인한다 (영구 점유 정책 강제용).
 
-    boolean existsByEmail(String email);
+    boolean existsByUsernameIncludingDeleted(String username);
 
-    boolean existsByEmailExcept(String email, String excludeUsername);
+    boolean existsByEmailIncludingDeleted(String email);
+
+    boolean existsByEmailExceptIncludingDeleted(String email, String excludeUsername);
 
     Page<UserEntity> search(String keyword, UserRole role, Pageable pageable);
 }
