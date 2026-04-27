@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @Schema(description = "지역 생성 요청 DTO")
 public record ReqCreateAreaDto(
@@ -26,7 +25,6 @@ public record ReqCreateAreaDto(
 
         @Schema(description = "활성화 여부", example = "true")
         @NotNull(message = "활성화 여부는 필수입니다.")
-        @DefaultValue("true")
         Boolean isActive
 ) {
 }
