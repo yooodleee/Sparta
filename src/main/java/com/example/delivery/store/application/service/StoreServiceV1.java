@@ -56,6 +56,7 @@ public class StoreServiceV1 {
                 .name(storeName)
                 .address(address)
                 .phone(phone)
+                .minOrderAmount(request.minOrderAmount())
                 .build();
 
         return ResCreateStoreDto.from(storeRepository.save(store));
@@ -93,7 +94,8 @@ public class StoreServiceV1 {
                 request.areaId(),
                 newName,
                 request.address().trim(),
-                trimToNull(request.phone())
+                trimToNull(request.phone()),
+                request.minOrderAmount()
         );
 
         return ResGetStoreDto.from(store);

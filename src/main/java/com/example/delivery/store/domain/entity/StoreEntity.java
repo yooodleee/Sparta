@@ -55,6 +55,9 @@ public class StoreEntity extends BaseEntity {
     @Column(length = 20)
     private String phone;
 
+    @Column(name = "min_order_amount", nullable = false)
+    private Integer minOrderAmount;
+
     @Column(name = "average_rating", precision = 2, scale = 1, nullable = false)
     private BigDecimal averageRating;
 
@@ -62,13 +65,14 @@ public class StoreEntity extends BaseEntity {
     private boolean isHidden;
 
     @Builder
-    private StoreEntity(UUID ownerId, UUID categoryId, UUID areaId, String name, String address, String phone) {
+    private StoreEntity(UUID ownerId, UUID categoryId, UUID areaId, String name, String address, String phone, Integer minOrderAmount) {
         this.ownerId = ownerId;
         this.categoryId = categoryId;
         this.areaId = areaId;
         this.name = name;
         this.address = address;
         this.phone = phone;
+        this.minOrderAmount = minOrderAmount;
         this.averageRating = DEFAULT_RATING;
         this.isHidden = false;
     }
@@ -76,12 +80,13 @@ public class StoreEntity extends BaseEntity {
     /**
      * 가게 기본 정보 수정. phone 은 null 허용(미입력 시 null 로 덮어씀)
      */
-    public void update(UUID categoryId, UUID areaId, String name, String address, String phone) {
+    public void update(UUID categoryId, UUID areaId, String name, String address, String phone, Integer minOrderAmount) {
         this.categoryId = categoryId;
         this.areaId = areaId;
         this.name = name;
         this.address = address;
         this.phone = phone;
+        this.minOrderAmount = minOrderAmount;
     }
 
     /**

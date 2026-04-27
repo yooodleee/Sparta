@@ -31,6 +31,9 @@ public record ResCreateStoreDto(
         @Schema(description = "전화번호")
         String phone,
 
+        @Schema(description = "최소 주문 금액")
+        Integer minOrderAmount,
+
         @Schema(description = "평균 평점")
         BigDecimal averageRating,
 
@@ -52,6 +55,7 @@ public record ResCreateStoreDto(
                 store.getName(),
                 store.getAddress(),
                 store.getPhone(),
+                store.getMinOrderAmount(),
                 store.getAverageRating(),
                 store.isHidden(),
                 store.getCreatedAt(),
