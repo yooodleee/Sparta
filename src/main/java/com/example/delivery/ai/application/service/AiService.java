@@ -23,12 +23,12 @@ public class AiService {
     private final MenuRepository menuRepository;
 
     @Transactional
-    public AiRequestLogEntity generatedAndLogDescription(String menuName){
+    public AiRequestLogEntity generatedAndLogDescription(String menuName, String userId){
 
         String responseText = geminiClient.generateMenuDescription(menuName);
 
         AiRequestLogEntity logEntity = AiRequestLogEntity.builder()
-                .userId("TEMP_USER") //Spring Security 연동 후 실제 유저 ID로 변경
+                .userId(userId)
                 .requestText(menuName)
                 .responseText(responseText)
                 .requestType("PRODUCT_DESCRIPTION")
@@ -39,7 +39,12 @@ public class AiService {
     }
 
     @Transactional
-    public void applyAiDescription(UUID menuId, ReqApplyAiDto request){
+    public void applyAiDescription(UUID menuId, ReqApplyAiDto request, String userId){
+        System.out.println("===========디버깅==========");
+        System.out.println("넘어온 aiLogId: " + request.aiLogId());
+        System.out.println("넘어온 수정본(description): " + request.description());
+        System.out.println("==========================");
+
             AiRequestLogEntity aiLog = aiRequestLogRepository.findById(request.aiLogId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.AI_LOG_NOT_FOUND));
 
@@ -47,10 +52,16 @@ public class AiService {
                     .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 
             if(aiLog.getIsApplied()){
-                throw new BusinessException(ErrorCode.VALIDATION_ERROR, "이미 적용된 AI 설명입니다.");
+                throw new BusinessException(ErrorCode.ALREADY_APPLIED_AI_LOG);
             }
 
-            menu.updateProduct(null, aiLog.getResponseText(), null, true, null);
+            //owner 최종 수정 또는 AI가 생성한 설명 그대로 사용
+            String finalDescription = (request.description() != null)
+                                        ? request.description()
+                                        : aiLog.getResponseText();
+
+
+            menu.updateProduct(null, finalDescription, null, true, null);
 
             aiLog.assignToMenu(menuId);
         }

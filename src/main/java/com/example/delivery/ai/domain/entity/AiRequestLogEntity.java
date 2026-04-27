@@ -31,7 +31,6 @@ public class AiRequestLogEntity {
     @Column(name = "user_id", length = 10, nullable = false)
     private String userId;
 
-    //인증/인가 구현 후 User 매핑 예정 (현재는 BaseEntity의 createdBy로 추적)
     @Column(name = "request_text", length = 100, nullable = false)
     private String requestText;
 
