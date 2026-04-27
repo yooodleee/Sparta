@@ -91,12 +91,12 @@ public class ReviewService {
         int size = ALLOWED_PAGE_SIZES.contains(pageable.getPageSize()) ? pageable.getPageSize() : 10;
         Pageable validatedPageable = PageRequest.of(pageable.getPageNumber(), size, pageable.getSort());
 
+        StoreEntity store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
         Page<ReviewEntity> reviews = (rating != null)
                 ? reviewRepository.findByStoreIdAndRating(storeId, rating, validatedPageable)
                 : reviewRepository.findByStoreId(storeId, validatedPageable);
-
-        StoreEntity store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
         return reviews.map(r -> ResReviewDto.from(r, store.getName()));
     }
