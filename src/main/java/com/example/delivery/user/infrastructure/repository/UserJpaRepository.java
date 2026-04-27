@@ -1,13 +1,13 @@
 package com.example.delivery.user.infrastructure.repository;
 
 import com.example.delivery.user.domain.entity.UserEntity;
-import com.example.delivery.user.domain.vo.Email;
 import com.example.delivery.user.domain.vo.Username;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface UserJpaRepository
         extends JpaRepository<UserEntity, UUID>,
@@ -16,15 +16,25 @@ public interface UserJpaRepository
     @Query("select u from UserEntity u where u.username = :username")
     Optional<UserEntity> findByUsername(Username username);
 
-    boolean existsByUsername(Username username);
+    // soft-deleted row 까지 포함 — @SQLRestriction 우회를 위해 native query 사용.
+    // username/email 의 영구 점유 정책을 강제하기 위함.
 
-    boolean existsByEmail(Email email);
+    @Query(value = "SELECT EXISTS(SELECT 1 FROM p_user WHERE username = :username)",
+            nativeQuery = true)
+    boolean existsByUsernameIncludingDeleted(@Param("username") String username);
 
-    @Query("""
-            select case when count(u) > 0 then true else false end
-            from UserEntity u
-            where u.email = :email
-              and u.username <> :excludeUsername
-            """)
-    boolean existsByEmailExcept(Email email, Username excludeUsername);
+    @Query(value = "SELECT EXISTS(SELECT 1 FROM p_user WHERE email = :email)",
+            nativeQuery = true)
+    boolean existsByEmailIncludingDeleted(@Param("email") String email);
+
+    @Query(value = """
+            SELECT EXISTS(
+                SELECT 1 FROM p_user
+                WHERE email = :email
+                  AND username <> :excludeUsername
+            )
+            """, nativeQuery = true)
+    boolean existsByEmailExceptIncludingDeleted(
+            @Param("email") String email,
+            @Param("excludeUsername") String excludeUsername);
 }

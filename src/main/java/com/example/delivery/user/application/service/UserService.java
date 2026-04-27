@@ -33,6 +33,10 @@ public class UserService {
         UserEntity user = findUserOrThrow(username);
         verifyCurrentPasswordIfChanging(user, req, me);
         user.update(me, toUpdateCommand(req, username));
+        // dirty checking 으로 commit 시점에 UPDATE 가 일어나면 unique 위반이
+        // repository 의 catch 블록 밖에서 발생해 도메인 예외로 변환되지 않는다.
+        // 명시적 save 로 즉시 flush 시켜 unique 보장 책임을 repository 에 위임한다.
+        userRepository.save(user);
 
         return ResUserDto.from(user);
     }
@@ -103,7 +107,8 @@ public class UserService {
     }
 
     private Email requireEmailAvailable(Email email, String targetUsername) {
-        if (userRepository.existsByEmailExcept(email.value(), targetUsername)) {
+        // soft-deleted 까지 포함해 영구 점유 정책을 강제한다.
+        if (userRepository.existsByEmailExceptIncludingDeleted(email.value(), targetUsername)) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 

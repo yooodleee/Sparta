@@ -38,10 +38,10 @@ public class AuthService {
         requireUsernameAvailable(username);
         requireEmailAvailable(email);
 
+        // race 안전망(unique 보장)은 UserRepository 가 책임진다.
         UserEntity saved = userRepository.save(UserEntity.register(
                 username, req.nickname(), email,
                 passwordEncoder.encode(req.password()), req.role()));
-
         return ResSignup.from(saved);
     }
 
@@ -57,13 +57,14 @@ public class AuthService {
     }
 
     private void requireUsernameAvailable(Username username) {
-        if (userRepository.existsByUsername(username.value())) {
+        // soft-deleted 까지 포함하여 영구 점유로 본다.
+        if (userRepository.existsByUsernameIncludingDeleted(username.value())) {
             throw new BusinessException(ErrorCode.DUPLICATE_USERNAME);
         }
     }
 
     private void requireEmailAvailable(Email email) {
-        if (userRepository.existsByEmail(email.value())) {
+        if (userRepository.existsByEmailIncludingDeleted(email.value())) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
     }
