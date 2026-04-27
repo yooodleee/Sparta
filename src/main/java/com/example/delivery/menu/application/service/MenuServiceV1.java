@@ -126,4 +126,19 @@ public class MenuServiceV1 {
         menu.delete(userId);
     }
 
+    @Transactional
+    public ResMenuDto restoreMenu(UUID menuId){
+        MenuEntity menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
+
+        if(menu.getDeletedAt() == null){
+            throw new BusinessException(ErrorCode.MENU_NOT_DELETED);
+
+        }
+        menu.restore(); //deletedAt = null, isHidden = true 처리
+
+        return ResMenuDto.from(menu);
+    }
+
+
 }

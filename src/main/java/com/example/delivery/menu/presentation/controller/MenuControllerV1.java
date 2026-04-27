@@ -121,4 +121,26 @@ public class MenuControllerV1 {
 
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
+
+    @PatchMapping("/menus/{menuId}/restore")
+    @Operation(
+            summary = "삭제된 메뉴 복구",
+            description = """
+                    [기능 설명]
+                    실수로 삭제한 경우 메뉴 등록의 번거로움을 줄이기 위해 추가했습니다. Soft Delete 처리되어 조회되지 않는 메뉴를 다시 활성화 상태로 되돌립니다.
+                    
+                    [참고]
+                    1. 자동 숨김 처리 : 복구된 메뉴는 사장님의 최종 확인이 필요하므로, 복구 즉시 `isHidden = true`(숨김) 상태가 됩니다. 
+                    2. 중복 복구 방지 : 삭제되지 않은(정상 상태인) 메뉴에 대해 복구를 시도할 경우 `400 Bad Request`를 반환합니다.
+                    
+                    [권한 안내]
+                    OWNER/MANAGER/MASTER 권한을 가진 사용자만 호출 가능합니다.
+                    """
+    )
+
+    public  ResponseEntity<ApiResponse<ResMenuDto>> restoreMenu(
+            @PathVariable UUID menuId){
+        ResMenuDto response = menuService.restoreMenu(menuId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
 }
