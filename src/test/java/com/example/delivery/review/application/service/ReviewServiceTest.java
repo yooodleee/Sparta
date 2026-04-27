@@ -184,7 +184,7 @@ class ReviewServiceTest {
 
             // then
             verify(reviewRepository).save(any(ReviewEntity.class));
-            verify(storeRepository).save(store);
+
             assertThat(store.getAverageRating()).isEqualByComparingTo("5.0");
         }
     }
@@ -246,7 +246,7 @@ class ReviewServiceTest {
             reviewService.updateReview(REVIEW_ID, new ReqUpdateReviewDto(3, "다시 생각해보니 보통이에요"), principal);
 
             // then
-            verify(storeRepository).save(store);
+
             assertThat(store.getAverageRating()).isEqualByComparingTo("3.0");
         }
 
@@ -377,7 +377,7 @@ class ReviewServiceTest {
             reviewService.deleteReview(REVIEW_ID, principal);
 
             // then
-            verify(storeRepository).save(store);
+
             assertThat(store.getAverageRating()).isEqualByComparingTo("0.0");
         }
 
@@ -422,7 +422,7 @@ class ReviewServiceTest {
             reviewService.deleteReview(REVIEW_ID, masterPrincipal);
 
             // then
-            verify(storeRepository).save(store);
+
             assertThat(store.getAverageRating()).isEqualByComparingTo("0.0");
         }
     }

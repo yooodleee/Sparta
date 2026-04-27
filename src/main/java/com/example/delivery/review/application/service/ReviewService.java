@@ -137,7 +137,6 @@ public class ReviewService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
         List<Integer> ratings = reviewRepository.findRatingsByStoreId(storeId);
         store.recalculateAverageRating(ratings);
-        storeRepository.save(store);
         return store;
     }
 }
