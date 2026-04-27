@@ -19,6 +19,6 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, UUID>, 
 
     Page<ReviewEntity> findByStoreIdAndRating(UUID storeId, int rating, Pageable pageable);
 
-    @Query("SELECT r.rating FROM ReviewEntity r WHERE r.storeId = :storeId AND r.deletedAt IS NULL")
+    @Query("SELECT r.rating FROM ReviewEntity r WHERE r.storeId = :storeId")
     List<Integer> findRatingsByStoreId(@Param("storeId") UUID storeId);
 }

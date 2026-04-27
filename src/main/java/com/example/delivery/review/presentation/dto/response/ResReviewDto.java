@@ -17,14 +17,14 @@ public record ResReviewDto(
         LocalDateTime updatedAt
 ) {
 
-    public static ResReviewDto from(ReviewEntity review, String storeName, String customerNickname) {
+    public static ResReviewDto from(ReviewEntity review, String storeName) {
         return new ResReviewDto(
                 review.getReviewId(),
                 review.getOrderId(),
                 review.getStoreId(),
                 storeName,
                 review.getCustomerId(),
-                customerNickname,
+                review.getCustomerNickname(),
                 review.getRating(),
                 review.getContent(),
                 review.getCreatedAt(),
