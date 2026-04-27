@@ -340,6 +340,7 @@ class StoreServiceV1Test {
             assertThat(result.storeId()).isEqualTo(storeId);
             assertThat(result.name()).isEqualTo("광화문 한식당");
             assertThat(result.phone()).isEqualTo("02-1234-5678");
+            assertThat(result.minOrderAmount()).isEqualTo(15000);
         }
 
         @Test
@@ -423,6 +424,7 @@ class StoreServiceV1Test {
 
             // then
             assertThat(result.name()).isEqualTo("새이름");
+            assertThat(result.minOrderAmount()).isEqualTo(20000);
         }
 
         @Test
