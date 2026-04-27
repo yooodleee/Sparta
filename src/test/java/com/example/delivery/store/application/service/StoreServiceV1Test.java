@@ -239,7 +239,10 @@ class StoreServiceV1Test {
             given(storeRepository.search(eq(null), eq(null), eq(null), any(Pageable.class))).willReturn(page);
 
             // when
-            PageResponse<ResGetStoreDto> result = storeService.getAllStores(null, null, null, 0, 10);
+            PageResponse<ResGetStoreDto> result = storeService.getAllStores(
+                    null, null, null,
+                    PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"))
+            );
 
             // then
             assertThat(result.content()).hasSize(2);
@@ -263,7 +266,10 @@ class StoreServiceV1Test {
             given(storeRepository.search(any(), any(), any(), any(Pageable.class))).willReturn(empty);
 
             // when
-            storeService.getAllStores("   ", null, null, 0, 10);
+            storeService.getAllStores(
+                    "   ", null, null,
+                    PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"))
+            );
 
             // then
             ArgumentCaptor<String> keywordCaptor = ArgumentCaptor.forClass(String.class);
@@ -293,7 +299,8 @@ class StoreServiceV1Test {
 
             // when
             PageResponse<ResGetStoreDto> result = storeService.getAllStores(
-                    "  광화문  ", categoryId, areaId, 0, 10
+                    "  광화문  ", categoryId, areaId,
+                    PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"))
             );
 
             // then

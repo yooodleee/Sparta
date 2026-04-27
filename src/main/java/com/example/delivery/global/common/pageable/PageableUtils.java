@@ -21,6 +21,16 @@ public class PageableUtils {
         );
     }
 
+    public static Pageable applyPageSizePolicy(Pageable pageable) {
+        int validatedSize = PageSizePolicy.validate(pageable.getPageSize());
+
+        if (validatedSize == pageable.getPageSize()) {
+            return pageable;
+        }
+
+        return PageRequest.of(pageable.getPageNumber(), validatedSize, pageable.getSort());
+    }
+
     public static boolean hasKeyword(String keyword) {
         return keyword != null && !keyword.trim().isEmpty();
     }

@@ -14,6 +14,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -47,7 +50,13 @@ public class StoreControllerV1 {
     }
 
     @Operation(summary = "가게 목록 조회",
-            description = "키워드/카테고리/지역으로 필터링하여 가게 목록을 페이지네이션 조회합니다.")
+            description = """
+                    키워드/카테고리/지역으로 필터링하여 가게 목록을 페이지네이션 조회합니다.
+
+                    정렬 가능 필드: `createdAt`, `updatedAt`, `name`, `averageRating`
+                    예) `?sort=averageRating,desc&sort=name,asc` (멀티 정렬 가능, 화이트리스트 외 필드는 무시)
+                    페이지 크기는 `10`, `30`, `50`만 허용되며 그 외 값은 `10`으로 보정됩니다.
+                    """)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
@@ -59,12 +68,9 @@ public class StoreControllerV1 {
             @RequestParam(required = false) UUID categoryId,
             @Parameter(description = "지역 ID")
             @RequestParam(required = false) UUID areaId,
-            @Parameter(description = "페이지 번호 (0부터 시작)")
-            @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기")
-            @RequestParam(defaultValue = "10") int size
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return ApiResponse.ok(storeService.getAllStores(keyword, categoryId, areaId, page, size));
+        return ApiResponse.ok(storeService.getAllStores(keyword, categoryId, areaId, pageable));
     }
 
     @Operation(summary = "가게 단건 조회",
