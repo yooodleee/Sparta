@@ -27,11 +27,17 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Smoke 레벨 통합 테스트 — auth/user 엔드포인트의 기본 happy/sad path 만 빠르게 검증한다.
+ * 깊은 경계 검증(role 전이 체인, privileged 매트릭스, soft delete 정책, 동시성)은
+ * 별도 클래스 (UserAuthRoleTransitionIntegrationTest / UserSoftDeleteIntegrationTest /
+ * UserSignupConcurrencyIntegrationTest) 참조.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-class UserAuthIntegrationTest {
+class UserAuthSmokeIntegrationTest {
 
     @Autowired
     MockMvc mockMvc;
