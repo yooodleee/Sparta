@@ -141,10 +141,25 @@ class OrderServiceV1Test {
             given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
 
             // when
-            ResOrderDto result = orderService.cancelByCustomer(orderId);
+            ResOrderDto result = orderService.cancelByCustomer(orderId, CUSTOMER_ID);
 
             // then
             assertThat(result.status()).isEqualTo(OrderStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("본인 아니면 FORBIDDEN 예외")
+        void notOwner_throwsException() {
+            // given
+            UUID orderId = UUID.randomUUID();
+            OrderEntity order = buildOrder();
+            given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
+
+            // when / then
+            assertThatThrownBy(() -> orderService.cancelByCustomer(orderId, "other"))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.FORBIDDEN));
         }
 
         @Test
@@ -157,7 +172,7 @@ class OrderServiceV1Test {
             given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
 
             // when / then
-            assertThatThrownBy(() -> orderService.cancelByCustomer(orderId))
+            assertThatThrownBy(() -> orderService.cancelByCustomer(orderId, CUSTOMER_ID))
                     .isInstanceOf(BusinessException.class)
                     .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
                             .isEqualTo(ErrorCode.INVALID_ORDER_STATUS));
@@ -173,7 +188,7 @@ class OrderServiceV1Test {
             given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
 
             // when / then
-            assertThatThrownBy(() -> orderService.cancelByCustomer(orderId))
+            assertThatThrownBy(() -> orderService.cancelByCustomer(orderId, CUSTOMER_ID))
                     .isInstanceOf(BusinessException.class)
                     .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
                             .isEqualTo(ErrorCode.ORDER_CANCEL_TIMEOUT));
@@ -311,13 +326,13 @@ class OrderServiceV1Test {
         }
     }
 
-    // ─── updateRequest ───────────────────────────────────────
+    // ─── updateRequestByCustomer ─────────────────────────────
     @Nested
-    @DisplayName("updateRequest — 요청사항 수정")
-    class UpdateRequest {
+    @DisplayName("updateRequestByCustomer — 고객 요청사항 수정")
+    class UpdateRequestByCustomer {
 
         @Test
-        @DisplayName("PENDING 상태에서는 수정 가능")
+        @DisplayName("본인 + PENDING 상태에서는 수정 가능")
         void pending_success() {
             // given
             UUID orderId = UUID.randomUUID();
@@ -325,10 +340,25 @@ class OrderServiceV1Test {
             given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
 
             // when
-            ResOrderDto result = orderService.updateRequest(orderId, "수정된 요청");
+            ResOrderDto result = orderService.updateRequestByCustomer(orderId, CUSTOMER_ID, "수정된 요청");
 
             // then
             assertThat(result.request()).isEqualTo("수정된 요청");
+        }
+
+        @Test
+        @DisplayName("본인 아니면 FORBIDDEN 예외")
+        void notOwner_throwsException() {
+            // given
+            UUID orderId = UUID.randomUUID();
+            OrderEntity order = buildOrder();
+            given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
+
+            // when / then
+            assertThatThrownBy(() -> orderService.updateRequestByCustomer(orderId, "other", "수정"))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.FORBIDDEN));
         }
 
         @Test
@@ -341,7 +371,44 @@ class OrderServiceV1Test {
             given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
 
             // when / then
-            assertThatThrownBy(() -> orderService.updateRequest(orderId, "수정"))
+            assertThatThrownBy(() -> orderService.updateRequestByCustomer(orderId, CUSTOMER_ID, "수정"))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.INVALID_ORDER_STATUS));
+        }
+    }
+
+    // ─── updateRequestByMaster ───────────────────────────────
+    @Nested
+    @DisplayName("updateRequestByMaster — MASTER 요청사항 수정")
+    class UpdateRequestByMaster {
+
+        @Test
+        @DisplayName("본인 검증 없이 PENDING이면 수정 가능")
+        void pending_success() {
+            // given
+            UUID orderId = UUID.randomUUID();
+            OrderEntity order = buildOrder();
+            given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
+
+            // when
+            ResOrderDto result = orderService.updateRequestByMaster(orderId, "수정");
+
+            // then
+            assertThat(result.request()).isEqualTo("수정");
+        }
+
+        @Test
+        @DisplayName("PENDING이 아니면 INVALID_ORDER_STATUS 예외")
+        void notPending_throwsException() {
+            // given
+            UUID orderId = UUID.randomUUID();
+            OrderEntity order = buildOrder();
+            setStatus(order, OrderStatus.COOKING);
+            given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
+
+            // when / then
+            assertThatThrownBy(() -> orderService.updateRequestByMaster(orderId, "수정"))
                     .isInstanceOf(BusinessException.class)
                     .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
                             .isEqualTo(ErrorCode.INVALID_ORDER_STATUS));
