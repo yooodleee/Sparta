@@ -8,10 +8,14 @@ import com.example.delivery.order.domain.entity.OrderStatus;
 import com.example.delivery.order.domain.repository.OrderRepository;
 import com.example.delivery.review.domain.entity.ReviewEntity;
 import com.example.delivery.review.domain.repository.ReviewRepository;
+import com.example.delivery.store.domain.entity.StoreEntity;
+import com.example.delivery.store.domain.repository.StoreRepository;
 import com.example.delivery.review.presentation.dto.request.ReqCreateReviewDto;
 import com.example.delivery.review.presentation.dto.request.ReqUpdateReviewDto;
 import com.example.delivery.review.presentation.dto.response.ResReviewDto;
+import com.example.delivery.user.domain.entity.UserEntity;
 import com.example.delivery.user.domain.entity.UserRole;
+import com.example.delivery.user.domain.repository.UserRepository;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +32,8 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final OrderRepository orderRepository;
+    private final StoreRepository storeRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public ResReviewDto createReview(UUID orderId, ReqCreateReviewDto request, UserPrincipal principal) {
@@ -48,23 +54,35 @@ public class ReviewService {
             throw new BusinessException(ErrorCode.DUPLICATE_REVIEW);
         }
 
+        // 작성 시점의 닉네임을 스냅샷으로 저장 -> 리뷰 조회 시, User Table 추가 검색 X
+        UserEntity customer = userRepository.findByUsername(principal.username())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         UUID storeId = order.getStoreId();
 
         ReviewEntity review = ReviewEntity.builder()
                 .orderId(orderId)
                 .storeId(storeId)
                 .customerId(principal.username())
+                .customerNickname(customer.getNickname())
                 .rating(request.rating())
                 .content(request.content())
                 .build();
 
         ReviewEntity saved = reviewRepository.save(review);
+        StoreEntity store = recalculateStoreRating(storeId);
 
-        // TODO: [Store 구현 이후] 가게 평균 평점 재집계
-        // recalculateAverageRating(storeId);
+        return ResReviewDto.from(saved, store.getName());
+    }
 
-        // TODO: [Store/User 구현 이후] 실제 storeName, customerNickname 조회
-        return ResReviewDto.from(saved, "임시 가게명", "임시 닉네임");
+    public ResReviewDto getReview(UUID reviewId) {
+        ReviewEntity review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+
+        StoreEntity store = storeRepository.findById(review.getStoreId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
+        return ResReviewDto.from(review, store.getName());
     }
 
     private static final List<Integer> ALLOWED_PAGE_SIZES = List.of(10, 30, 50);
@@ -73,12 +91,14 @@ public class ReviewService {
         int size = ALLOWED_PAGE_SIZES.contains(pageable.getPageSize()) ? pageable.getPageSize() : 10;
         Pageable validatedPageable = PageRequest.of(pageable.getPageNumber(), size, pageable.getSort());
 
+        StoreEntity store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
         Page<ReviewEntity> reviews = (rating != null)
                 ? reviewRepository.findByStoreIdAndRating(storeId, rating, validatedPageable)
                 : reviewRepository.findByStoreId(storeId, validatedPageable);
 
-        // TODO: [Store/User 구현 이후] 실제 storeName, customerNickname 조회
-        return reviews.map(r -> ResReviewDto.from(r, "임시 가게명", "임시 닉네임"));
+        return reviews.map(r -> ResReviewDto.from(r, store.getName()));
     }
 
     @Transactional
@@ -92,11 +112,9 @@ public class ReviewService {
 
         review.update(request.rating(), request.content());
 
-        // TODO: [Store 구현 이후] 가게 평균 평점 재집계
-        // recalculateAverageRating(review.getStoreId());
+        StoreEntity store = recalculateStoreRating(review.getStoreId());
 
-        // TODO: [Store/User 구현 이후] 실제 storeName, customerNickname 조회
-        return ResReviewDto.from(review, "임시 가게명", "임시 닉네임");
+        return ResReviewDto.from(review, store.getName());
     }
 
     @Transactional
@@ -111,7 +129,14 @@ public class ReviewService {
 
         review.delete(principal.username());
 
-        // TODO: [Store 구현 이후] 가게 평균 평점 재집계
-        // recalculateAverageRating(review.getStoreId());
+        recalculateStoreRating(review.getStoreId());
+    }
+
+    private StoreEntity recalculateStoreRating(UUID storeId) {
+        StoreEntity store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+        List<Integer> ratings = reviewRepository.findRatingsByStoreId(storeId);
+        store.recalculateAverageRating(ratings);
+        return store;
     }
 }

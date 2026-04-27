@@ -158,13 +158,13 @@
 
 ### 2.9 Review `/api/v1/...`
 
-| Method | Path                        | 설명                     | 권한                      |
-|--------|-----------------------------|------------------------|-------------------------|
-| POST   | `/orders/{orderId}/reviews` | 리뷰 작성                  | CUSTOMER(본인, COMPLETED) |
-| GET    | `/reviews`                  | 목록(storeId, rating 필터) | ALL                     |
-| GET    | `/reviews/{reviewId}`       | 상세                     | ALL                     |
-| PATCH  | `/reviews/{reviewId}`       | 수정                     | CUSTOMER(본인)            |
-| DELETE | `/reviews/{reviewId}`       | Soft Delete            | 본인/MANAGER/MASTER       |
+| Method | Path                        | 설명                | 권한                      |
+|--------|-----------------------------|-------------------|-------------------------|
+| POST   | `/orders/{orderId}/reviews` | 리뷰 작성             | CUSTOMER(본인, COMPLETED) |
+| GET    | `/stores/{storeId}/reviews` | 목록(rating 필터)     | ALL                     |
+| GET    | `/reviews/{reviewId}`       | 상세                | ALL                     |
+| PATCH  | `/reviews/{reviewId}`       | 수정                | CUSTOMER(본인)            |
+| DELETE | `/reviews/{reviewId}`       | Soft Delete       | 본인/MANAGER/MASTER       |
 
 ### 2.10 Address `/api/v1/addresses`
 

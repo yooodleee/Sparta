@@ -1,6 +1,7 @@
 package com.example.delivery.order.infrastructure.repository;
 
 import com.example.delivery.order.domain.entity.OrderEntity;
+import com.example.delivery.order.domain.entity.OrderStatus;
 import com.example.delivery.order.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,7 +28,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public Page<OrderEntity> findAll(Pageable pageable) {
-        return orderJpaRepository.findAll(pageable);
+    public Page<OrderEntity> search(String customerId, UUID storeId, OrderStatus status, Pageable pageable) {
+        return orderJpaRepository.search(customerId, storeId, status, pageable);
     }
 }
