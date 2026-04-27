@@ -227,6 +227,28 @@ class ReviewControllerTest {
                 .andExpect(status().isOk());
     }
 
+    // ── getReview ─────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("리뷰 단건 조회 - 성공 (인증 불필요)")
+    void getReview_success() throws Exception {
+        given(reviewService.getReview(eq(REVIEW_ID))).willReturn(sampleDto());
+
+        mockMvc.perform(get("/api/v1/reviews/{reviewId}", REVIEW_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.reviewId").value(REVIEW_ID.toString()));
+    }
+
+    @Test
+    @DisplayName("리뷰 단건 조회 - 실패: 존재하지 않는 리뷰 (404)")
+    void getReview_notFound() throws Exception {
+        given(reviewService.getReview(any()))
+                .willThrow(new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+
+        mockMvc.perform(get("/api/v1/reviews/{reviewId}", REVIEW_ID))
+                .andExpect(status().isNotFound());
+    }
+
     // ── updateReview ──────────────────────────────────────────────
 
     @Test
