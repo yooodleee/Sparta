@@ -67,6 +67,18 @@ public class ReviewController {
         return ApiResponse.ok(reviewService.getReviewsByStore(storeId, rating, pageable));
     }
 
+    @Operation(summary = "리뷰 단건 조회", description = "리뷰 ID로 특정 리뷰를 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리뷰 없음")
+    })
+    @GetMapping("/reviews/{reviewId}")
+    public ApiResponse<ResReviewDto> getReview(
+            @Parameter(description = "리뷰 ID") @PathVariable UUID reviewId
+    ) {
+        return ApiResponse.ok(reviewService.getReview(reviewId));
+    }
+
     @Operation(summary = "리뷰 수정", description = "본인이 작성한 리뷰를 수정합니다. (인증 필요)")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공"),
