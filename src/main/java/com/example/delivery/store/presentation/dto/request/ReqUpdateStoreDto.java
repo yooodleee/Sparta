@@ -1,10 +1,7 @@
 package com.example.delivery.store.presentation.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.util.UUID;
 
@@ -35,6 +32,10 @@ public record ReqUpdateStoreDto(
                 regexp = "^$|^[0-9-]{9,20}$",
                 message = "전화번호 형식이 올바르지 않습니다."
         )
-        String phone
+        String phone,
+
+        @NotNull(message = "최소 주문 금액은 필수입니다.")
+        @PositiveOrZero(message = "최소 주문 금액은 0원 이상이어야 합니다.")
+        Integer minOrderAmount
 ) {
 }
