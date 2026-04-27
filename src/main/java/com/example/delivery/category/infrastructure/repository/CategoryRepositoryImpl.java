@@ -23,7 +23,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     public Optional<CategoryEntity> findByName(String name) {
-        return categoryJpaRepository.findByName(name);
+        return categoryJpaRepository.findByNameAndDeletedAtIsNull(name);
     }
 
     @Override

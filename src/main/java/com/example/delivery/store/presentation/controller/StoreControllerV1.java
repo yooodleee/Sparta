@@ -44,8 +44,11 @@ public class StoreControllerV1 {
     }
 
     @GetMapping("/{storeId}")
-    public ApiResponse<ResGetStoreDto> getStore(@PathVariable UUID storeId) {
-        return ApiResponse.ok(storeService.getStore(storeId));
+    public ApiResponse<ResGetStoreDto> getStore(
+            @PathVariable UUID storeId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        return ApiResponse.ok(storeService.getStore(storeId, userPrincipal));
     }
 
     @PatchMapping("/{storeId}")
