@@ -134,7 +134,7 @@ boolean isValid(String token);
 - `MenuRepository`
 - `MenuServiceV1`
     - `create(storeId, ReqCreateMenuDto, loginUser)` — AI 옵션 시 `AiServiceV1.generateDescription` 호출
-    - `update/delete/toggleHide/get/list`
+    - `update/delete/restore/toggleHide/get/list`
 - `MenuControllerV1`
 
 ### 3.6 Order + OrderItem

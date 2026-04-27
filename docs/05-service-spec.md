@@ -56,6 +56,13 @@
     - `AiRequestLog` 저장
 3. `MenuEntity` 저장
 
+### 2.4 `MenuService.restore(menuId, loginUser)` - `@Transactional`
+
+1. 가게 소유자 권한 검증
+2. `findById`를 사용하여 삭제 여부와 무관하게 엔티티 조회 (삭제되지 않은 메뉴만 조회하는 필터-`findByIdAndDeletedAtIsNull` 미적용)
+3. `deletedAt == null`인 경우 이미 정상 상태이므로 400 에러 (`MENU_NOT_DELETED`) 반환
+4. `deletedAt == null` 초기화 및 `isHidden = true`로 상태 강제 전환 
+
 ## 3. 주문 (핵심)
 
 ### 3.1 `OrderService.create(ReqOrder, loginUser)` — `@Transactional`
