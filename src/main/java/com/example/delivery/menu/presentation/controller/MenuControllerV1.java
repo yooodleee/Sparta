@@ -1,22 +1,30 @@
 package com.example.delivery.menu.presentation.controller;
 
 import com.example.delivery.global.common.response.ApiResponse;
+import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.menu.application.service.MenuServiceV1;
+import com.example.delivery.menu.domain.repository.MenuSearchCondition;
 import com.example.delivery.menu.presentation.dto.request.ReqCreateMenuDto;
 import com.example.delivery.menu.presentation.dto.request.ReqUpdateMenuDto;
 import com.example.delivery.menu.presentation.dto.response.ResMenuDto;
+import com.example.delivery.user.domain.entity.UserRole;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Repository;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Scanner;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
@@ -37,14 +45,43 @@ public class MenuControllerV1 {
     }
 
     @GetMapping("/stores/{storeId}/menus")
-    @Operation(summary = "가게 메뉴 목록 조회", description = "특정 가게의 메뉴를 조회합니다. keyword 파라미터로 상품명 검색이 가능합니다.")
-    public ResponseEntity<ApiResponse<List<ResMenuDto>>> getVisibleMenus(
-            @PathVariable UUID storeId,
-            @RequestParam(required = false) String keyword){
+    @Operation(summary = "가게 메뉴 목록 조회",
+            description = "특정 가게에 등록된 메뉴 목록을 조회합니다. (키워드, 가격대, 기간 필터 지원)<br><br>" +
+                          "[권한별 데이터 노출 기준]<br>" +
+                        "CUSTOMER(일반 고객)<br>" + "-가게(Store)와 메뉴(Menu)가 모두 정상 상태(`isHidden=false`,`deletedAt=null`인 데이터만 반환됩니다.<br><br>" +
+                        "OWNER / MANAGER / MASTER<br>" + "-숨김 처리되거나 삭제된 메뉴, 혹은 숨김 처리된 가게의 메뉴도 모두 포함하여 조회할 수 있습니다. (권한 검증 통과 시)" )
 
-        List<ResMenuDto> response = menuService.getVisibleMenus(storeId, keyword);
+    public ResponseEntity<ApiResponse<PageResponse<ResMenuDto>>> getMenus(
+    @PathVariable UUID storeId,
+            @ModelAttribute MenuSearchCondition condition,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        return ResponseEntity.ok(ApiResponse.ok(response));
+        //log.info("포스트맨에서 넘어온 검색 조건 확인 : {}",condition);
+        UserRole userRole = UserRole.CUSTOMER;
+        //UserRole userRole = UserRole.OWNER;
+        //log.info("포스트맨 파라미터: {}, 현재 내 권한: {}", condition, userRole);
+
+
+        if (userDetails != null && !userDetails.getAuthorities().isEmpty()) {
+            String authority = userDetails.getAuthorities().iterator().next().getAuthority();
+
+            if (authority.startsWith("ROLE_")) {
+                authority = authority.substring(5);
+            }
+
+            try {
+                userRole = UserRole.valueOf(authority);
+            } catch (IllegalArgumentException e) {
+                log.warn("알 수 없는 권한입니다. 기본값(CUSTOMER)으로 처리합니다. 입력된 권한: {}", authority);
+            }
+        }
+
+        Page<ResMenuDto> response = menuService.getMenusWithCondition(storeId, condition, pageable, userRole);
+
+        PageResponse<ResMenuDto> pagedResponse = PageResponse.from(response);
+
+        return ResponseEntity.ok(ApiResponse.ok(pagedResponse));
     }
 
     @GetMapping("/menus/{menuId}")

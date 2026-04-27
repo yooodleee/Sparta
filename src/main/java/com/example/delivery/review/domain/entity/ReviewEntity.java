@@ -44,6 +44,9 @@ public class ReviewEntity extends BaseEntity {
     @Column(length = 10, nullable = false)
     private String customerId;
 
+    @Column(length = 50, nullable = false)
+    private String customerNickname;
+
     @Column(nullable = false)
     private int rating;
 

@@ -128,6 +128,11 @@
 | DELETE | `/menus/{menuId}`         | Soft Delete   | OWNER(본인)/MASTER         |
 | PATCH  | `/menus/{menuId}/hide`    | 숨김 토글         | OWNER(본인)/MANAGER/MASTER |
 
+> [메뉴 노출 기준 (Query DSL 적용)]
+> 목록 조회 (`GET /stores/{storeOd}/menus`) 및 상세 조회 (`GET /menus/{menuId}`) 시 요청자의 권한에 따라 노출되는 데이터가 다릅니다.
+> CUSTOMER(일반 유저): 속한 가게(Store)와 메뉴(Menu)가 모두 `deletedAt == null`이고 `isHidden == false`인 정상 데이터만 조회 가능합니다.
+> OWNER / MANAGER / MASTER : 숨김(isHidden) 또는 소프트 삭제(deletedAt) 처리된 내역도 조회 가능합니다. (단, OWNER는 본인 소유 가게에 한함)
+
 ### 2.7 Order `/api/v1/orders`
 
 | Method | Path                | 설명                     | 권한                             |
@@ -152,13 +157,13 @@
 
 ### 2.9 Review `/api/v1/...`
 
-| Method | Path                        | 설명                     | 권한                      |
-|--------|-----------------------------|------------------------|-------------------------|
-| POST   | `/orders/{orderId}/reviews` | 리뷰 작성                  | CUSTOMER(본인, COMPLETED) |
-| GET    | `/reviews`                  | 목록(storeId, rating 필터) | ALL                     |
-| GET    | `/reviews/{reviewId}`       | 상세                     | ALL                     |
-| PATCH  | `/reviews/{reviewId}`       | 수정                     | CUSTOMER(본인)            |
-| DELETE | `/reviews/{reviewId}`       | Soft Delete            | 본인/MANAGER/MASTER       |
+| Method | Path                        | 설명                | 권한                      |
+|--------|-----------------------------|-------------------|-------------------------|
+| POST   | `/orders/{orderId}/reviews` | 리뷰 작성             | CUSTOMER(본인, COMPLETED) |
+| GET    | `/stores/{storeId}/reviews` | 목록(rating 필터)     | ALL                     |
+| GET    | `/reviews/{reviewId}`       | 상세                | ALL                     |
+| PATCH  | `/reviews/{reviewId}`       | 수정                | CUSTOMER(본인)            |
+| DELETE | `/reviews/{reviewId}`       | Soft Delete       | 본인/MANAGER/MASTER       |
 
 ### 2.10 Address `/api/v1/addresses`
 

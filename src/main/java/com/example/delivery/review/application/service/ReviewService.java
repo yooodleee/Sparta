@@ -54,23 +54,25 @@ public class ReviewService {
             throw new BusinessException(ErrorCode.DUPLICATE_REVIEW);
         }
 
+        // 작성 시점의 닉네임을 스냅샷으로 저장 -> 리뷰 조회 시, User Table 추가 검색 X
+        UserEntity customer = userRepository.findByUsername(principal.username())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         UUID storeId = order.getStoreId();
 
         ReviewEntity review = ReviewEntity.builder()
                 .orderId(orderId)
                 .storeId(storeId)
                 .customerId(principal.username())
+                .customerNickname(customer.getNickname())
                 .rating(request.rating())
                 .content(request.content())
                 .build();
 
         ReviewEntity saved = reviewRepository.save(review);
-
         StoreEntity store = recalculateStoreRating(storeId);
-        UserEntity customer = userRepository.findByUsername(principal.username())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        return ResReviewDto.from(saved, store.getName(), customer.getNickname());
+        return ResReviewDto.from(saved, store.getName());
     }
 
     public ResReviewDto getReview(UUID reviewId) {
@@ -79,10 +81,8 @@ public class ReviewService {
 
         StoreEntity store = storeRepository.findById(review.getStoreId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
-        UserEntity customer = userRepository.findByUsername(review.getCustomerId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        return ResReviewDto.from(review, store.getName(), customer.getNickname());
+        return ResReviewDto.from(review, store.getName());
     }
 
     private static final List<Integer> ALLOWED_PAGE_SIZES = List.of(10, 30, 50);
@@ -91,18 +91,14 @@ public class ReviewService {
         int size = ALLOWED_PAGE_SIZES.contains(pageable.getPageSize()) ? pageable.getPageSize() : 10;
         Pageable validatedPageable = PageRequest.of(pageable.getPageNumber(), size, pageable.getSort());
 
+        StoreEntity store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
         Page<ReviewEntity> reviews = (rating != null)
                 ? reviewRepository.findByStoreIdAndRating(storeId, rating, validatedPageable)
                 : reviewRepository.findByStoreId(storeId, validatedPageable);
 
-        StoreEntity store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
-
-        return reviews.map(r -> {
-            UserEntity customer = userRepository.findByUsername(r.getCustomerId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-            return ResReviewDto.from(r, store.getName(), customer.getNickname());
-        });
+        return reviews.map(r -> ResReviewDto.from(r, store.getName()));
     }
 
     @Transactional
@@ -117,10 +113,8 @@ public class ReviewService {
         review.update(request.rating(), request.content());
 
         StoreEntity store = recalculateStoreRating(review.getStoreId());
-        UserEntity customer = userRepository.findByUsername(review.getCustomerId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        return ResReviewDto.from(review, store.getName(), customer.getNickname());
+        return ResReviewDto.from(review, store.getName());
     }
 
     @Transactional
@@ -143,7 +137,6 @@ public class ReviewService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
         List<Integer> ratings = reviewRepository.findRatingsByStoreId(storeId);
         store.recalculateAverageRating(ratings);
-        storeRepository.save(store);
         return store;
     }
 }
