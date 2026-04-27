@@ -1,6 +1,5 @@
 package com.example.delivery.menu.application.service;
 
-import com.example.delivery.ai.domain.repository.AiRequestLogRepository;
 import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.menu.domain.entity.MenuEntity;
 import com.example.delivery.menu.domain.repository.MenuRepository;
@@ -14,11 +13,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.awt.*;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,9 +30,6 @@ public class MenuServiceV1Test {
 
     @Mock
     private MenuRepository menuRepository;
-
-    @Mock
-    private AiRequestLogRepository aiRequestLogRepository;
 
     @Test
     @DisplayName("메뉴 생성 성공 테스트")
@@ -93,6 +87,8 @@ public class MenuServiceV1Test {
     @DisplayName("메뉴 삭제 성공 테스트 (Soft Delete 검증)")
     void deleteMenu_success(){
         UUID menuId = UUID.randomUUID();
+        String testUserId = "test";
+
         MenuEntity menu = MenuEntity.builder()
                 .name("단종될 메뉴")
                 .price(10000)
@@ -100,10 +96,10 @@ public class MenuServiceV1Test {
 
         given(menuRepository.findById(menuId)).willReturn(Optional.of(menu));
 
-        menuService.deleteMenu(menuId);
+        menuService.deleteMenu(menuId, testUserId);
 
         assertThat(menu.getDeletedAt()).isNotNull(); //삭제 시간
-        assertThat(menu.getDeletedBy()).isEqualTo("system"); //삭제자 기록
+        assertThat(menu.getDeletedBy()).isEqualTo(testUserId); //삭제자 기록
     }
 
 }

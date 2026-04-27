@@ -2,6 +2,7 @@ package com.example.delivery.menu.presentation.controller;
 
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.global.common.response.PageResponse;
+import com.example.delivery.global.infrastructure.security.UserPrincipal;
 import com.example.delivery.menu.application.service.MenuServiceV1;
 import com.example.delivery.menu.domain.repository.MenuSearchCondition;
 import com.example.delivery.menu.presentation.dto.request.ReqCreateMenuDto;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -19,7 +21,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -53,35 +54,21 @@ public class MenuControllerV1 {
 
     public ResponseEntity<ApiResponse<PageResponse<ResMenuDto>>> getMenus(
     @PathVariable UUID storeId,
-            @ModelAttribute MenuSearchCondition condition,
-            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @ParameterObject @ModelAttribute MenuSearchCondition condition,
+            @ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         //log.info("포스트맨에서 넘어온 검색 조건 확인 : {}",condition);
-        UserRole userRole = UserRole.CUSTOMER;
+        //UserRole userRole = UserRole.CUSTOMER;
         //UserRole userRole = UserRole.OWNER;
         //log.info("포스트맨 파라미터: {}, 현재 내 권한: {}", condition, userRole);
 
 
-        if (userDetails != null && !userDetails.getAuthorities().isEmpty()) {
-            String authority = userDetails.getAuthorities().iterator().next().getAuthority();
-
-            if (authority.startsWith("ROLE_")) {
-                authority = authority.substring(5);
-            }
-
-            try {
-                userRole = UserRole.valueOf(authority);
-            } catch (IllegalArgumentException e) {
-                log.warn("알 수 없는 권한입니다. 기본값(CUSTOMER)으로 처리합니다. 입력된 권한: {}", authority);
-            }
-        }
+        UserRole userRole = (userPrincipal != null) ? userPrincipal.role() : UserRole.CUSTOMER;
 
         Page<ResMenuDto> response = menuService.getMenusWithCondition(storeId, condition, pageable, userRole);
 
-        PageResponse<ResMenuDto> pagedResponse = PageResponse.from(response);
-
-        return ResponseEntity.ok(ApiResponse.ok(pagedResponse));
+        return ResponseEntity.ok(ApiResponse.ok(PageResponse.from(response)));
     }
 
     @GetMapping("/menus/{menuId}")
@@ -127,9 +114,10 @@ public class MenuControllerV1 {
     @DeleteMapping("/menus/{menuId}")
     @Operation(summary = "메뉴 삭제", description = "메뉴를 삭제합니다. (soft delete)")
     public ResponseEntity<ApiResponse<Void>> deleteMenu(
-            @PathVariable UUID menuId){
+            @PathVariable UUID menuId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal){
 
-        menuService.deleteMenu(menuId);
+        menuService.deleteMenu(menuId, userPrincipal.getName());
 
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
