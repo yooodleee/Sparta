@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-import static com.example.delivery.global.common.pageable.PageableUtils.createPageable;
+import static com.example.delivery.global.common.pageable.PageableUtils.applyPageSizePolicy;
 import static com.example.delivery.global.common.pageable.PageableUtils.hasKeyword;
 
 @Service
@@ -61,13 +61,13 @@ public class StoreServiceV1 {
         return ResCreateStoreDto.from(storeRepository.save(store));
     }
 
-    public PageResponse<ResGetStoreDto> getAllStores(String keyword, UUID categoryId, UUID areaId, int page, int size) {
+    public PageResponse<ResGetStoreDto> getAllStores(String keyword, UUID categoryId, UUID areaId, Pageable pageable) {
 
-        Pageable pageable = createPageable(page, size);
+        Pageable validatedPageable = applyPageSizePolicy(pageable);
         String normalizedKeyword = hasKeyword(keyword) ? keyword.trim() : null;
 
         Page<ResGetStoreDto> result = storeRepository
-                .search(normalizedKeyword, categoryId, areaId, pageable)
+                .search(normalizedKeyword, categoryId, areaId, validatedPageable)
                 .map(ResGetStoreDto::from);
 
         return PageResponse.from(result);
