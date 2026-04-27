@@ -3,6 +3,8 @@ package com.example.delivery.review.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -18,6 +20,7 @@ import com.example.delivery.review.domain.entity.ReviewEntity;
 import com.example.delivery.review.domain.repository.ReviewRepository;
 import com.example.delivery.review.presentation.dto.request.ReqCreateReviewDto;
 import com.example.delivery.review.presentation.dto.request.ReqUpdateReviewDto;
+import com.example.delivery.review.presentation.dto.response.ResReviewDto;
 import com.example.delivery.store.domain.entity.StoreEntity;
 import com.example.delivery.store.domain.repository.StoreRepository;
 import com.example.delivery.user.domain.entity.UserEntity;
@@ -28,6 +31,12 @@ import com.example.delivery.user.domain.vo.Username;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -415,6 +424,128 @@ class ReviewServiceTest {
             // then
             verify(storeRepository).save(store);
             assertThat(store.getAverageRating()).isEqualByComparingTo("0.0");
+        }
+    }
+
+    @Nested
+    @DisplayName("getReview — 리뷰 단건 조회")
+    class GetReview {
+
+        @Test
+        @DisplayName("존재하지 않는 reviewId → REVIEW_NOT_FOUND 예외")
+        void reviewNotFound_throwsException() {
+            // given
+            given(reviewRepository.findById(REVIEW_ID)).willReturn(Optional.empty());
+
+            // when / then
+            assertThatThrownBy(() -> reviewService.getReview(REVIEW_ID))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.REVIEW_NOT_FOUND));
+        }
+
+        @Test
+        @DisplayName("정상 조회 → 리뷰 + 가게명 반환")
+        void success_returnsReviewDto() {
+            // given
+            ReviewEntity review = mock(ReviewEntity.class);
+            given(review.getStoreId()).willReturn(STORE_ID);
+            given(review.getCustomerNickname()).willReturn("테스터");
+            given(reviewRepository.findById(REVIEW_ID)).willReturn(Optional.of(review));
+
+            StoreEntity store = StoreEntity.builder()
+                    .ownerId(UUID.randomUUID())
+                    .categoryId(UUID.randomUUID())
+                    .areaId(UUID.randomUUID())
+                    .name("테스트 가게")
+                    .address("서울시 강남구")
+                    .phone("010-0000-0000")
+                    .build();
+            given(storeRepository.findById(STORE_ID)).willReturn(Optional.of(store));
+
+            // when
+            ResReviewDto result = reviewService.getReview(REVIEW_ID);
+
+            // then
+            assertThat(result.storeName()).isEqualTo("테스트 가게");
+            assertThat(result.customerNickname()).isEqualTo("테스터");
+        }
+    }
+
+    @Nested
+    @DisplayName("getReviewsByStore — 가게 리뷰 목록 조회")
+    class GetReviewsByStore {
+
+        private StoreEntity sampleStore() {
+            return StoreEntity.builder()
+                    .ownerId(UUID.randomUUID())
+                    .categoryId(UUID.randomUUID())
+                    .areaId(UUID.randomUUID())
+                    .name("테스트 가게")
+                    .address("서울시 강남구")
+                    .phone("010-0000-0000")
+                    .build();
+        }
+
+        @Test
+        @DisplayName("평점 필터 없음 → 전체 리뷰 반환")
+        void noRatingFilter_returnsAllReviews() {
+            // given
+            StoreEntity store = sampleStore();
+            given(storeRepository.findById(STORE_ID)).willReturn(Optional.of(store));
+
+            ReviewEntity review = mock(ReviewEntity.class);
+            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+            given(reviewRepository.findByStoreId(eq(STORE_ID), any()))
+                    .willReturn(new PageImpl<>(List.of(review), pageable, 1L));
+
+            // when
+            Page<ResReviewDto> result = reviewService.getReviewsByStore(STORE_ID, null, pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(1);
+            verify(reviewRepository).findByStoreId(eq(STORE_ID), any());
+            verify(reviewRepository, never()).findByStoreIdAndRating(any(), anyInt(), any());
+        }
+
+        @Test
+        @DisplayName("평점 필터 있음 → 해당 평점 리뷰만 반환")
+        void ratingFilter_returnsFilteredReviews() {
+            // given
+            StoreEntity store = sampleStore();
+            given(storeRepository.findById(STORE_ID)).willReturn(Optional.of(store));
+
+            ReviewEntity review = mock(ReviewEntity.class);
+            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+            given(reviewRepository.findByStoreIdAndRating(eq(STORE_ID), eq(5), any()))
+                    .willReturn(new PageImpl<>(List.of(review), pageable, 1L));
+
+            // when
+            Page<ResReviewDto> result = reviewService.getReviewsByStore(STORE_ID, 5, pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(1);
+            verify(reviewRepository).findByStoreIdAndRating(eq(STORE_ID), eq(5), any());
+            verify(reviewRepository, never()).findByStoreId(any(), any());
+        }
+
+        @Test
+        @DisplayName("허용되지 않는 페이지 사이즈(20) → 기본값 10으로 보정")
+        void invalidPageSize_correctedToDefault() {
+            // given
+            StoreEntity store = sampleStore();
+            given(storeRepository.findById(STORE_ID)).willReturn(Optional.of(store));
+            given(reviewRepository.findByStoreId(eq(STORE_ID), any())).willReturn(Page.empty());
+
+            Pageable invalidPageable = PageRequest.of(0, 20);
+
+            // when
+            reviewService.getReviewsByStore(STORE_ID, null, invalidPageable);
+
+            // then
+            ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+            verify(reviewRepository).findByStoreId(eq(STORE_ID), captor.capture());
+            assertThat(captor.getValue().getPageSize()).isEqualTo(10);
         }
     }
 }
