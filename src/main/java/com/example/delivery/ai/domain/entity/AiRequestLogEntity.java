@@ -5,13 +5,22 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "p_ai_request_log")
+@Table(name = "p_ai_request_log",
+        indexes = {
+                @Index(name = "idx_ai_log_user_created", columnList = "userId, createdAt"),
+                @Index(name = "idx_ai_log_menu_applid", columnList = "menuId, isApplied")
+        })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EntityListeners(AuditingEntityListener.class)
 public class AiRequestLogEntity {
 
     @Id
@@ -37,6 +46,15 @@ public class AiRequestLogEntity {
 
     @Column(name = "is_applied", nullable = false)
     private Boolean isApplied = false;
+
+    //BaseEntity 상속 대신 생성 관련 필드만 직접 선언 (수정/삭제 불가)
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @CreatedBy
+    @Column(length = 10, updatable = false)
+    private String createdBy;
 
     @Builder
     public AiRequestLogEntity(String userId, String requestText, String responseText, String requestType){

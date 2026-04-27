@@ -31,9 +31,25 @@ public class UserService {
     @Transactional
     public ResUserDto update(String username, ReqUpdateUser req, LoginUser me) {
         UserEntity user = findUserOrThrow(username);
+        verifyCurrentPasswordIfChanging(user, req, me);
         user.update(me, toUpdateCommand(req, username));
 
         return ResUserDto.from(user);
+    }
+
+    private void verifyCurrentPasswordIfChanging(UserEntity user, ReqUpdateUser req, LoginUser me) {
+        if (req.password() == null) {
+            return;
+        }
+        if (!me.isSelf(user.getUsername().value())) {
+            return;
+        }
+        if (req.currentPassword() == null || req.currentPassword().isBlank()) {
+            throw new BusinessException(ErrorCode.CURRENT_PASSWORD_REQUIRED);
+        }
+        if (!passwordEncoder.matches(req.currentPassword(), user.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.INVALID_CURRENT_PASSWORD);
+        }
     }
 
     @Transactional
