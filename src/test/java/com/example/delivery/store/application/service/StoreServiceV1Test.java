@@ -75,7 +75,7 @@ class StoreServiceV1Test {
             UUID areaId = UUID.randomUUID();
 
             ReqCreateStoreDto request = new ReqCreateStoreDto(
-                    categoryId, areaId, "광화문 한식당", "서울 종로구 세종대로 1", "02-1234-5678"
+                    categoryId, areaId, "광화문 한식당", "서울 종로구 세종대로 1", "02-1234-5678", 15000
             );
 
             StoreEntity saved = createStoreEntity(
@@ -96,6 +96,7 @@ class StoreServiceV1Test {
             assertThat(result.categoryId()).isEqualTo(categoryId);
             assertThat(result.areaId()).isEqualTo(areaId);
             assertThat(result.name()).isEqualTo("광화문 한식당");
+            assertThat(result.minOrderAmount()).isEqualTo(15000);
             assertThat(result.isHidden()).isFalse();
 
             ArgumentCaptor<StoreEntity> captor = ArgumentCaptor.forClass(StoreEntity.class);
@@ -106,6 +107,7 @@ class StoreServiceV1Test {
             assertThat(captured.getName()).isEqualTo("광화문 한식당");
             assertThat(captured.getAddress()).isEqualTo("서울 종로구 세종대로 1");
             assertThat(captured.getPhone()).isEqualTo("02-1234-5678");
+            assertThat(captured.getMinOrderAmount()).isEqualTo(15000);
         }
 
         @Test
@@ -117,7 +119,7 @@ class StoreServiceV1Test {
             UUID areaId = UUID.randomUUID();
 
             ReqCreateStoreDto request = new ReqCreateStoreDto(
-                    categoryId, areaId, "  광화문 한식당  ", "  서울 종로구  ", "   "
+                    categoryId, areaId, "  광화문 한식당  ", "  서울 종로구  ", "   ", 15000
             );
 
             StoreEntity saved = createStoreEntity(
@@ -140,6 +142,7 @@ class StoreServiceV1Test {
             assertThat(captured.getName()).isEqualTo("광화문 한식당");
             assertThat(captured.getAddress()).isEqualTo("서울 종로구");
             assertThat(captured.getPhone()).isNull();
+            assertThat(captured.getMinOrderAmount()).isEqualTo(15000);
         }
 
         @Test
@@ -151,7 +154,7 @@ class StoreServiceV1Test {
             UUID areaId = UUID.randomUUID();
 
             ReqCreateStoreDto request = new ReqCreateStoreDto(
-                    categoryId, areaId, "광화문 한식당", "서울", "02-1234-5678"
+                    categoryId, areaId, "광화문 한식당", "서울", "02-1234-5678", 15000
             );
 
             given(categoryRepository.findById(categoryId)).willReturn(Optional.empty());
@@ -172,7 +175,7 @@ class StoreServiceV1Test {
             UUID areaId = UUID.randomUUID();
 
             ReqCreateStoreDto request = new ReqCreateStoreDto(
-                    categoryId, areaId, "광화문 한식당", "서울", "02-1234-5678"
+                    categoryId, areaId, "광화문 한식당", "서울", "02-1234-5678", 15000
             );
 
             given(categoryRepository.findById(categoryId)).willReturn(Optional.of(createCategoryEntity(categoryId)));
@@ -194,7 +197,7 @@ class StoreServiceV1Test {
             UUID areaId = UUID.randomUUID();
 
             ReqCreateStoreDto request = new ReqCreateStoreDto(
-                    categoryId, areaId, "광화문 한식당", "서울", "02-1234-5678"
+                    categoryId, areaId, "광화문 한식당", "서울", "02-1234-5678", 15000
             );
 
             StoreEntity existing = createStoreEntity(
@@ -371,7 +374,7 @@ class StoreServiceV1Test {
             setField(store, "id", storeId);
 
             ReqUpdateStoreDto request = new ReqUpdateStoreDto(
-                    categoryId, areaId, "광화문 리뉴얼", "서울 종로구 2", "02-2222-2222"
+                    categoryId, areaId, "광화문 리뉴얼", "서울 종로구 2", "02-2222-2222", 20000
             );
             UserPrincipal principal = new UserPrincipal(ownerId, "owner01", UserRole.OWNER);
 
@@ -388,6 +391,7 @@ class StoreServiceV1Test {
             assertThat(store.getName()).isEqualTo("광화문 리뉴얼");
             assertThat(store.getAddress()).isEqualTo("서울 종로구 2");
             assertThat(store.getPhone()).isEqualTo("02-2222-2222");
+            assertThat(store.getMinOrderAmount()).isEqualTo(20000);
         }
 
         @Test
@@ -405,7 +409,7 @@ class StoreServiceV1Test {
             setField(store, "id", storeId);
 
             ReqUpdateStoreDto request = new ReqUpdateStoreDto(
-                    categoryId, areaId, "새이름", "서울", null
+                    categoryId, areaId, "새이름", "서울", null, 20000
             );
             UserPrincipal manager = new UserPrincipal(UUID.randomUUID(), "mng01", UserRole.MANAGER);
 
@@ -436,7 +440,7 @@ class StoreServiceV1Test {
             setField(store, "id", storeId);
 
             ReqUpdateStoreDto request = new ReqUpdateStoreDto(
-                    categoryId, areaId, "광화문 한식당", "서울 바뀐 주소", "02-9999-9999"
+                    categoryId, areaId, "광화문 한식당", "서울 바뀐 주소", "02-9999-9999", 20000
             );
             UserPrincipal principal = new UserPrincipal(ownerId, "owner01", UserRole.OWNER);
 
@@ -466,7 +470,7 @@ class StoreServiceV1Test {
             setField(store, "id", storeId);
 
             ReqUpdateStoreDto request = new ReqUpdateStoreDto(
-                    UUID.randomUUID(), UUID.randomUUID(), "새이름", "서울", null
+                    UUID.randomUUID(), UUID.randomUUID(), "새이름", "서울", null, 20000
             );
             UserPrincipal other = new UserPrincipal(otherOwnerId, "other01", UserRole.OWNER);
 
@@ -490,7 +494,7 @@ class StoreServiceV1Test {
             setField(store, "id", storeId);
 
             ReqUpdateStoreDto request = new ReqUpdateStoreDto(
-                    UUID.randomUUID(), UUID.randomUUID(), "새이름", "서울", null
+                    UUID.randomUUID(), UUID.randomUUID(), "새이름", "서울", null, 20000
             );
             UserPrincipal customer = new UserPrincipal(UUID.randomUUID(), "cust01", UserRole.CUSTOMER);
 
@@ -507,7 +511,7 @@ class StoreServiceV1Test {
             // given
             UUID storeId = UUID.randomUUID();
             ReqUpdateStoreDto request = new ReqUpdateStoreDto(
-                    UUID.randomUUID(), UUID.randomUUID(), "새이름", "서울", null
+                    UUID.randomUUID(), UUID.randomUUID(), "새이름", "서울", null, 20000
             );
             UserPrincipal principal = new UserPrincipal(UUID.randomUUID(), "owner01", UserRole.OWNER);
 
@@ -537,7 +541,7 @@ class StoreServiceV1Test {
             );
 
             ReqUpdateStoreDto request = new ReqUpdateStoreDto(
-                    categoryId, areaId, "새이름", "서울", null
+                    categoryId, areaId, "새이름", "서울", null, 20000
             );
             UserPrincipal principal = new UserPrincipal(ownerId, "owner01", UserRole.OWNER);
 
@@ -746,6 +750,7 @@ class StoreServiceV1Test {
                 .name(name)
                 .address(address)
                 .phone(phone)
+                .minOrderAmount(15000)
                 .build();
 
         setField(store, "id", UUID.randomUUID());
