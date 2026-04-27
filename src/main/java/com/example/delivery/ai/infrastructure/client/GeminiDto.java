@@ -17,6 +17,19 @@ public class GeminiDto {
         private SystemInstruction system_instruction;
         private List<Content> contents;
         private List<SafetySetting> safetySettings;
+        private GenerationConfig generationConfig;
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GenerationConfig{
+        private Double temperature;
+        private Integer candidateCount;
+        //private Integer maxOutputTokens;
+        private Double topP;
+        private Integer topK;
     }
 
     @Getter

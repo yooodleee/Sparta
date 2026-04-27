@@ -27,14 +27,21 @@ public class GeminiClient {
 
     public String generateMenuDescription(String menuName){
 
+        //GenerationConfig
+        GeminiDto.GenerationConfig config = GeminiDto.GenerationConfig.builder()
+                .temperature(0.8)
+                .candidateCount(1)
+                .build();
+
         //시스템 인스트럭션(절대 규칙 부여)
         GeminiDto.SystemInstruction instruction = GeminiDto.SystemInstruction.builder()
                 .parts(List.of(GeminiDto.Part.builder()
-                    .text("너는 배달 앱의 메뉴 설명을 전문적으로 작성하는 10년차 메뉴 작성 전문가야." +
-                        "1. 글자 수는 공백 포함 50자 이내로 작성할 것." +
+                    .text("너는 배달 앱의 메뉴 설명을 전문적으로 작성하는 10년차 카피라이터야." +
+                        "1. 글자 수는 공백 포함 50자 이내로 짧고 강렬하게 작성할 것." +
                         "2. 메뉴, 음식과 관련이 없는 요청이 들어오면 응답하지 말고 '메뉴 이름을 정확히 입력해주세요'라고만 답변할 것." +
                         "3. 모르는 정보나 메뉴와 관계없는 미사어구(예:세계 최고의 맛 등)는 지양하고, 재료와 맛에만 집중할 것." +
-                        "4. 비속어, 욕설 금지")
+                        "4. 비속어, 욕설 금지." +
+                        "5. 메뉴 이름이 들어오면 고객이 당장 주문하고 싶게끔 식감과 풍미를 생생하게 묘사할 것.")
                     .build()))
                 .build();
 
@@ -50,6 +57,7 @@ public class GeminiClient {
                 .system_instruction(instruction)
                 .contents(buildFewShotAndActualRequest(menuName))
                 .safetySettings(safetySettings)
+                .generationConfig(config)
                 .build();
 
         try{
@@ -93,6 +101,12 @@ public class GeminiClient {
 
         contents.add(makeContent("user", "시카고 딥디쉬 피자"));
         contents.add(makeContent("model", "입안 가득 느껴지는 다섯가지 프리미엄 치즈 맛에 매콤한 아라비아따 소스로 화룡점정!"));
+
+        contents.add(makeContent("user", "마늘 간장 치킨"));
+        contents.add(makeContent("model", "알싸한 통마늘의 풍미와 특제 숙성 간장이 만나 깊은 감칠맛을 내는 바학한 치킨"));
+
+        contents.add(makeContent("user", "치즈 돈까스"));
+        contents.add(makeContent("model", "바삭한 튀김옷을 베어 물면 고소한 모짜렐라 치즈가 폭포수처럼 쏟아지는 극강의 고소함"));
 
         //함정 질문 예시
         String[] badRequests = {
