@@ -91,4 +91,10 @@ public class MenuEntity extends BaseEntity {
         }
     }
 
+    public void restore() {
+        this.deletedAt = null;
+        this.deletedBy = null;
+        this.isHidden = true;
+    }
+
 }

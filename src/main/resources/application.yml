@@ -24,3 +24,8 @@ jwt:
   # 테스트 편의상 만료를 사실상 무한(100년)으로 둠.
   # 운영 배포 시 반드시 JWT_EXPIRATION_MINUTES를 짧게(예: 30~60) 재설정할 것.
   expiration-minutes: ${JWT_EXPIRATION_MINUTES:52560000}  # 100년 = 100 * 365 * 24 * 60
+
+# 구글 Gemini API 설정
+gemini:
+  api-url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+  api-key: ${GEMINI_API_KEY}

@@ -68,14 +68,15 @@ PENDING → ACCEPTED → COOKING → DELIVERING → DELIVERED → COMPLETED
 | 가게 수정(숨김 토글 포함) | ❌               | ✅(본인)    | ✅       | ✅      |
 | 가게 삭제         | ❌                   | ✅(본인)    | ❌       | ✅      |
 | 메뉴 CRUD       | ❌                   | ✅(본인 가게) | ✅       | ✅      |
+| 메뉴 복구                     | ❌                   | ✅(본인 가게) | ✅       | ✅      |
 | 주문 생성         | ✅                   | ❌        | ❌       | ❌      |
 | 주문 상태 변경      | ❌                   | ✅(본인 가게) | ✅       | ✅      |
 | 주문 취소(5분 내)   | ✅(본인)               | ❌        | ❌       | ✅      |
 | 리뷰 작성         | ✅(본인 주문, COMPLETED) | ❌        | ❌       | ❌      |
 | 사용자 관리(대상 CUSTOMER·OWNER) | ❌    | ❌        | ✅       | ✅      |
 | 사용자 관리(대상 MANAGER·MASTER) | ❌    | ❌        | ❌(본인 제외) | ✅(본인 role 변경 제외) |
-| MANAGER 생성/삭제 | ❌                   | ❌        | ❌       | ✅      |
-| 카테고리/지역 관리    | ❌                   | ❌        | ✅       | ✅      |
+| MANAGER 생성/삭제             | ❌                   | ❌        | ❌       | ✅      |
+| 카테고리/지역 관리                | ❌                   | ❌        | ✅       | ✅      |
 
 ## 5. 핵심 불변식(Invariants)
 
@@ -95,6 +96,7 @@ PENDING → ACCEPTED → COOKING → DELIVERING → DELIVERED → COMPLETED
 
 - `price` > 0
 - `is_hidden`과 `deleted_at`은 별개로 동작 (숨김 ≠ 삭제)
+- Soft Delete된 메뉴를 복구할 경우, 사장님의 재확인을 유도하기 위해 `is_hidden = true`로 강제 전환된다. 
 - `aiDescription=true` 시 `aiPrompt` 필수, 최대 100자
 
 ### Order

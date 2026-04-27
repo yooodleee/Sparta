@@ -127,6 +127,7 @@
 | PATCH  | `/menus/{menuId}`         | 수정            | OWNER(본인)/MANAGER/MASTER |
 | DELETE | `/menus/{menuId}`         | Soft Delete   | OWNER(본인)/MASTER         |
 | PATCH  | `/menus/{menuId}/hide`    | 숨김 토글         | OWNER(본인)/MANAGER/MASTER |
+| PATCH  | `/menus/{menuId}/restore` | 삭제된 메뉴 복구      | OWNER(본인)/MANAGER/MASTER |
 
 > [메뉴 노출 기준 (Query DSL 적용)]
 > 목록 조회 (`GET /stores/{storeOd}/menus`) 및 상세 조회 (`GET /menus/{menuId}`) 시 요청자의 권한에 따라 노출되는 데이터가 다릅니다.
@@ -304,12 +305,15 @@ POST /api/v1/menus/{menuId}/ai-description
 → 서버가 prompt 끝에 `"답변을 최대한 간결하게 50자 이하로"` 자동 삽입
 → p_ai_request_log에 is_applied=false 상태로 기록 저장
 → `data`: { "aiLogId": "7fa93d23-5204-4cab-a044-0dd21aec16a2",
-"prompt": "매콤하고 바삭한 양념치킨의 특징을 살려줘", "responseText": "임안 가득 퍼지는 소스와 바삭한 치킨의 조화" }
+"prompt": "매콤하고 바삭한 양념치킨의 특징을 살려줘", "description": "입안 가득 퍼지는 소스와 바삭한 치킨의 조화" }
 
 -2. 확정 및 메뉴 반영
 ```http
 PATCH /api/v1/ai/logs/{aiLogId}/apply
 Authorization : Bearer {JWT}
+{
+    "aiLogId": "7fa93d23-5204-4cab-a044-0dd21aec16a2",
+    "description": "사장님이 직접 수정한 치킨!"
 ```
 → 해당 로그의 is_applied를 true로 변경
 → 연관된 Menu의 description 필드를 responseText 값으로 업데이트

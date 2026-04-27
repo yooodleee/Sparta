@@ -33,10 +33,12 @@ public enum ErrorCode {
     //Menu
     MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다."),
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다."),
+    MENU_NOT_DELETED(HttpStatus.BAD_REQUEST, "삭제되지 않은 메뉴입니다."),
 
     //AI
     AI_LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "AI 요청 기록을 찾을 수 없습니다."),
     AI_DESCRIPTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI 설명 생성에 실패했습니다."),
+    ALREADY_APPLIED_AI_LOG(HttpStatus.BAD_REQUEST, "이미 적용된 AI 설명입니다."),
 
     //Order
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."),

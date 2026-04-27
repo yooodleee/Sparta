@@ -28,22 +28,22 @@ public class AiRequestLogEntity {
     @Column(name = "ai_log_id")
     private UUID id;
 
-    @Column(nullable = false, length = 10)
+    @Column(name = "user_id", length = 10, nullable = false)
     private String userId;
 
-    @Column(name = "request_text", nullable = false, length = 100)
-    private String prompt;
+    @Column(name = "request_text", length = 100, nullable = false)
+    private String requestText;
 
     @Column(name = "response_text", columnDefinition = "TEXT")
     private String responseText;
 
-    @Column(name = "request_type", nullable = false, length = 30)
+    @Column(name = "request_type", length = 30, nullable = false)
     private String requestType;
 
     @Column(name = "menu_id")
     private UUID menuId;
 
-    @Column(nullable = false)
+    @Column(name = "is_applied", nullable = false)
     private Boolean isApplied = false;
 
     //BaseEntity 상속 대신 생성 관련 필드만 직접 선언 (수정/삭제 불가)
@@ -56,9 +56,9 @@ public class AiRequestLogEntity {
     private String createdBy;
 
     @Builder
-    public AiRequestLogEntity(String userId, String prompt, String responseText, String requestType){
+    public AiRequestLogEntity(String userId, String requestText, String responseText, String requestType){
         this.userId = userId;
-        this.prompt = prompt;
+        this.requestText = requestText;
         this.responseText = responseText;
         this.requestType = requestType;
         this.isApplied = false;

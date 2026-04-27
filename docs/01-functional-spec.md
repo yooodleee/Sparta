@@ -47,6 +47,7 @@
 - **F-MENU-01** 메뉴 등록 (OWNER, AI 설명 자동 생성 옵션)
 - **F-MENU-02** 메뉴 조회/수정/삭제 + 숨김 처리
 - **F-MENU-03** 메뉴 등록 시 `aiDescription=true`이면 Gemini 호출 → description 자동 채움 + 로그 기록
+- **F-MENU-04** 삭제된 메뉴 복구(OWNER/MANAGER/MASTER, 안전을 위해 복구 시 `is_hidden = true` 자동 적용)
 
 ### 2.6 주문 (ORDER)
 

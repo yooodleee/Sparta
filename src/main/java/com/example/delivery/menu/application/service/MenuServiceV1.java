@@ -120,12 +120,25 @@ public class MenuServiceV1 {
     }
 
     @Transactional
-    public void deleteMenu(UUID menuId){
+    public void deleteMenu(UUID menuId, String userId){
         MenuEntity menu = menuRepository.findById(menuId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
-        // 인증/인가 적용 후 SecurityContext에서 현재 로그인한 사용자 정보를 가져와야 함
-        // 현재는 임시 문자열 "system" 삽입
-        menu.delete("system");
+        menu.delete(userId);
     }
+
+    @Transactional
+    public ResMenuDto restoreMenu(UUID menuId){
+        MenuEntity menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
+
+        if(menu.getDeletedAt() == null){
+            throw new BusinessException(ErrorCode.MENU_NOT_DELETED);
+
+        }
+        menu.restore(); //deletedAt = null, isHidden = true 처리
+
+        return ResMenuDto.from(menu);
+    }
+
 
 }
