@@ -73,6 +73,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/orders/*/cancel").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/orders/*/status").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/orders/*/request").authenticated()
+                        .requestMatchers("/api/v1/menus/**").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtTokenProvider, userRepository, objectMapper),
