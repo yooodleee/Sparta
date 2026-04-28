@@ -2,6 +2,7 @@ package com.example.delivery.payment.application.service;
 
 import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
+import com.example.delivery.order.domain.entity.OrderEntity;
 import com.example.delivery.order.domain.repository.OrderRepository;
 import com.example.delivery.payment.domain.entity.PaymentEntity;
 import com.example.delivery.payment.domain.entity.PaymentStatus;
@@ -47,9 +48,13 @@ public class PaymentServiceV1 {
 
     @Transactional
     public ResPaymentDto processPayment(ReqCreatePaymentDto dto) {
-        // 1. 주문 존재 검증
-        orderRepository.findById(dto.orderId())
+        // 1. 주문 존재 검증 + 금액 일치 확인
+        OrderEntity order = orderRepository.findById(dto.orderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (!dto.amount().equals(order.getTotalPrice())) {
+            throw new BusinessException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
+        }
 
         // 2. 기존 결제 조회 — 상태별 분기
         //    FAILED: 기존 엔티티 재사용(retry) → orderId UNIQUE 제약 충돌 방지
