@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: delivery
       POSTGRES_PASSWORD: delivery
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -15,23 +15,23 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    restart: unless-stopped
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/delivery-app:latest
     container_name: delivery-app
+    env_file:
+      - .env
+    environment:
+      JAVA_OPTS: "-Xms128m -Xmx256m"
+    mem_limit: 512m
+    memswap_limit: 512m
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_NAME: delivery
-      DB_USERNAME: delivery
-      DB_PASSWORD: delivery
     ports:
       - "8080:8080"
+    restart: unless-stopped
 
 volumes:
   postgres_data:
