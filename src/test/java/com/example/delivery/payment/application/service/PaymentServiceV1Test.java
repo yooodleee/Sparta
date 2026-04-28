@@ -13,7 +13,6 @@ import com.example.delivery.global.common.exception.BusinessException;
 import com.example.delivery.global.common.exception.ErrorCode;
 import com.example.delivery.order.domain.entity.OrderEntity;
 import com.example.delivery.order.domain.repository.OrderRepository;
-import static org.mockito.Mockito.mock;
 import com.example.delivery.payment.domain.entity.PaymentEntity;
 import com.example.delivery.payment.domain.entity.PaymentStatus;
 import com.example.delivery.payment.domain.repository.PaymentRepository;
@@ -48,6 +47,14 @@ class PaymentServiceV1Test {
         return new ReqCreatePaymentDto(ORDER_ID, AMOUNT);
     }
 
+    private OrderEntity buildOrder(int totalPrice) {
+        return OrderEntity.builder()
+                .customerId("user01")
+                .storeId(UUID.randomUUID())
+                .totalPrice(totalPrice)
+                .build();
+    }
+
     private PaymentEntity buildPayment(PaymentStatus status) {
         PaymentEntity p = PaymentEntity.builder()
                 .orderId(ORDER_ID)
@@ -70,7 +77,7 @@ class PaymentServiceV1Test {
         @DisplayName("PG 승인 성공 → COMPLETED 상태로 저장")
         void success_completed() {
             // given
-            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(mock(OrderEntity.class)));
+            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(buildOrder(AMOUNT)));
             given(paymentRepository.findByOrderId(ORDER_ID)).willReturn(Optional.empty());
             given(pgClient.requestApproval(eq(ORDER_ID), eq(AMOUNT)))
                     .willReturn(PgResponse.success("SIM-abc-123"));
@@ -90,7 +97,7 @@ class PaymentServiceV1Test {
         @DisplayName("PG 승인 실패 → FAILED 상태로 저장")
         void pgFailed_statusFailed() {
             // given
-            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(mock(OrderEntity.class)));
+            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(buildOrder(AMOUNT)));
             given(paymentRepository.findByOrderId(ORDER_ID)).willReturn(Optional.empty());
             given(pgClient.requestApproval(eq(ORDER_ID), eq(AMOUNT)))
                     .willReturn(PgResponse.failure("잔액 부족"));
@@ -103,6 +110,24 @@ class PaymentServiceV1Test {
             assertThat(result.status()).isEqualTo(PaymentStatus.FAILED.name());
             assertThat(result.pgTransactionId()).isNull();
             assertThat(result.paidAt()).isNull();
+        }
+
+        @Test
+        @DisplayName("결제 금액이 주문 금액과 불일치 → PAYMENT_AMOUNT_MISMATCH 예외, PG 호출 없음")
+        void amountMismatch_throwsException() {
+            // given — 주문 금액 25_000, 요청 금액 1_000 (과소 결제 시도)
+            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(buildOrder(AMOUNT)));
+
+            ReqCreatePaymentDto mismatchedRequest = new ReqCreatePaymentDto(ORDER_ID, 1_000);
+
+            // when / then
+            assertThatThrownBy(() -> paymentService.processPayment(mismatchedRequest))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.PAYMENT_AMOUNT_MISMATCH));
+
+            verify(pgClient, never()).requestApproval(any(), anyInt());
+            verify(paymentRepository, never()).save(any());
         }
 
         @Test
@@ -126,7 +151,7 @@ class PaymentServiceV1Test {
         void duplicateCompleted_throwsException() {
             // given
             PaymentEntity existing = buildPayment(PaymentStatus.COMPLETED);
-            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(mock(OrderEntity.class)));
+            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(buildOrder(AMOUNT)));
             given(paymentRepository.findByOrderId(ORDER_ID)).willReturn(Optional.of(existing));
 
             // when / then
@@ -143,7 +168,7 @@ class PaymentServiceV1Test {
         void duplicateReady_throwsException() {
             // given
             PaymentEntity existing = buildPayment(PaymentStatus.READY);
-            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(mock(OrderEntity.class)));
+            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(buildOrder(AMOUNT)));
             given(paymentRepository.findByOrderId(ORDER_ID)).willReturn(Optional.of(existing));
 
             // when / then
@@ -158,7 +183,7 @@ class PaymentServiceV1Test {
         void retryAfterFailed_succeeds() {
             // given: 이전 결제가 FAILED 상태
             PaymentEntity failedPayment = buildPayment(PaymentStatus.FAILED);
-            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(mock(OrderEntity.class)));
+            given(orderRepository.findById(ORDER_ID)).willReturn(Optional.of(buildOrder(AMOUNT)));
             given(paymentRepository.findByOrderId(ORDER_ID)).willReturn(Optional.of(failedPayment));
             given(pgClient.requestApproval(eq(ORDER_ID), eq(AMOUNT)))
                     .willReturn(PgResponse.success("SIM-retry-tx"));
