@@ -1,0 +1,92 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ci:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - run: chmod +x gradlew
+
+      # build 태스크에 test가 포함되므로 별도 test 태스크 불필요
+      - run: ./gradlew --no-daemon clean build
+
+  cd:
+    name: Deploy to EC2
+    needs: ci
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/delivery-app:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/delivery-app:${{ github.sha }}
+
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/app
+
+            # 배포 전 현재 이미지 저장 (롤백용)
+            PREV_IMAGE=$(docker inspect delivery-app \
+              --format='{{.Image}}' 2>/dev/null || echo "")
+            echo "$PREV_IMAGE" > ~/app/.prev_image
+
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/delivery-app:latest
+            docker compose up -d --no-deps app
+
+            # Health Check (최대 30초 대기)
+            for i in $(seq 1 6); do
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+                http://localhost:8080/actuator/health)
+              if [ "$STATUS" = "200" ]; then
+                docker image prune -f
+                echo "Health check passed"
+                exit 0
+              fi
+              echo "Waiting... ($i/6)"
+              sleep 5
+            done
+
+            # Health Check 실패 시 자동 롤백
+            echo "Health check failed — rolling back"
+            PREV=$(cat ~/app/.prev_image)
+            if [ -n "$PREV" ]; then
+              docker tag "$PREV" \
+                ${{ secrets.DOCKERHUB_USERNAME }}/delivery-app:latest
+              docker compose up -d --no-deps app
+            fi
+            exit 1
