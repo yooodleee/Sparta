@@ -10,6 +10,7 @@ import com.example.delivery.area.presentation.dto.request.ReqUpdateAreaDto;
 import com.example.delivery.area.presentation.dto.response.ResCreateAreaDto;
 import com.example.delivery.area.presentation.dto.response.ResGetAreaDto;
 import com.example.delivery.global.common.response.PageResponse;
+import com.example.delivery.store.domain.repository.StoreRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,9 @@ class AreaServiceV1Test {
 
     @Mock
     private AreaRepository areaRepository;
+
+    @Mock
+    private StoreRepository storeRepository;
 
     @InjectMocks
     private AreaServiceV1 areaService;
@@ -380,6 +384,8 @@ class AreaServiceV1Test {
             assertThat(area.isDeleted()).isTrue();
             assertThat(getField(area, "deletedBy")).isEqualTo("master01");
             assertThat(getField(area, "deletedAt")).isNotNull();
+
+            verify(storeRepository).existsByAreaId(areaId);
         }
 
         @Test

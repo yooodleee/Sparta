@@ -10,6 +10,7 @@ import com.example.delivery.category.presentation.dto.request.ReqUpdateCategoryD
 import com.example.delivery.category.presentation.dto.response.ResCreateCategoryDto;
 import com.example.delivery.category.presentation.dto.response.ResGetCategoryDto;
 import com.example.delivery.global.common.response.PageResponse;
+import com.example.delivery.store.domain.repository.StoreRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ class CategoryServiceV1Test {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private StoreRepository storeRepository;
 
     @InjectMocks
     private CategoryServiceV1 categoryService;
@@ -330,6 +334,8 @@ class CategoryServiceV1Test {
             assertThat(category.isDeleted()).isTrue();
             assertThat(getField(category, "deletedBy")).isEqualTo("master01");
             assertThat(getField(category, "deletedAt")).isNotNull();
+
+            verify(storeRepository).existsByCategoryId(categoryId);
         }
 
         @Test
