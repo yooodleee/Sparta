@@ -104,4 +104,23 @@ public class PaymentEntity extends BaseEntity {
         }
         this.status = PaymentStatus.CANCELLED;
     }
+
+    /**
+     * FAILED 결제를 재시도 가능 상태로 초기화한다.
+     * 기존 레코드를 재사용하므로 orderId UNIQUE 제약 충돌이 발생하지 않는다.
+     */
+    public void retry(Integer newAmount) {
+        if (this.status != PaymentStatus.FAILED) {
+            throw new BusinessException(ErrorCode.INVALID_PAYMENT_STATUS,
+                    "FAILED 상태의 결제만 재시도할 수 있습니다. (현재 상태: %s)".formatted(this.status));
+        }
+        if (newAmount == null || newAmount < 0) {
+            throw new BusinessException(ErrorCode.INVALID_PAYMENT_AMOUNT,
+                    "결제 금액은 0원 이상이어야 합니다. 입력값: " + newAmount);
+        }
+        this.status = PaymentStatus.READY;
+        this.amount = newAmount;
+        this.pgTransactionId = null;
+        this.paidAt = null;
+    }
 }

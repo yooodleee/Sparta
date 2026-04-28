@@ -10,6 +10,7 @@ import com.example.delivery.payment.infrastructure.pg.PgClient;
 import com.example.delivery.payment.infrastructure.pg.PgResponse;
 import com.example.delivery.payment.presentation.dto.request.ReqCreatePaymentDto;
 import com.example.delivery.payment.presentation.dto.response.ResPaymentDto;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,24 +51,31 @@ public class PaymentServiceV1 {
         orderRepository.findById(dto.orderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
-        // 2. 중복 결제 검증 — READY 또는 COMPLETED 상태인 결제가 이미 있으면 거부
-        paymentRepository.findByOrderId(dto.orderId())
-                .filter(p -> p.getStatus() == PaymentStatus.READY
-                          || p.getStatus() == PaymentStatus.COMPLETED)
-                .ifPresent(p -> {
-                    throw new BusinessException(ErrorCode.PAYMENT_ALREADY_PROCESSED);
-                });
+        // 2. 기존 결제 조회 — 상태별 분기
+        //    FAILED: 기존 엔티티 재사용(retry) → orderId UNIQUE 제약 충돌 방지
+        //    그 외(READY/COMPLETED/CANCELLED): 중복 결제로 거부
+        //    없음: 새 엔티티 생성
+        Optional<PaymentEntity> existingOpt = paymentRepository.findByOrderId(dto.orderId());
 
-        // 3. 결제 엔티티 생성 (초기 상태: READY)
-        PaymentEntity payment = PaymentEntity.builder()
-                .orderId(dto.orderId())
-                .amount(dto.amount())
-                .build();
+        final PaymentEntity payment;
+        if (existingOpt.isPresent()) {
+            PaymentEntity existing = existingOpt.get();
+            if (existing.getStatus() != PaymentStatus.FAILED) {
+                throw new BusinessException(ErrorCode.PAYMENT_ALREADY_PROCESSED);
+            }
+            existing.retry(dto.amount());
+            payment = existing;
+        } else {
+            payment = PaymentEntity.builder()
+                    .orderId(dto.orderId())
+                    .amount(dto.amount())
+                    .build();
+        }
 
-        // 4. PG 승인 요청 (시뮬레이션)
+        // 3. PG 승인 요청 (시뮬레이션)
         PgResponse pgResponse = pgClient.requestApproval(dto.orderId(), dto.amount());
 
-        // 5. PG 응답에 따라 상태 전이
+        // 4. PG 응답에 따라 상태 전이
         if (pgResponse.success()) {
             payment.markCompleted(pgResponse.transactionId());
             log.info("[Payment] 결제 성공 — orderId={}, txId={}", dto.orderId(), pgResponse.transactionId());
@@ -76,7 +84,7 @@ public class PaymentServiceV1 {
             log.warn("[Payment] 결제 실패 — orderId={}, reason={}", dto.orderId(), pgResponse.failReason());
         }
 
-        // 6. 최종 상태로 저장
+        // 5. 최종 상태로 저장
         PaymentEntity saved = paymentRepository.save(payment);
         return ResPaymentDto.from(saved);
     }
