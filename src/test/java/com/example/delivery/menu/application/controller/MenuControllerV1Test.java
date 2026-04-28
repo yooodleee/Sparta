@@ -1,5 +1,7 @@
 package com.example.delivery.menu.application.controller;
 
+
+import com.example.delivery.global.infrastructure.security.UserPrincipal;
 import com.example.delivery.menu.application.service.MenuServiceV1;
 import com.example.delivery.menu.domain.repository.MenuSearchCondition;
 import com.example.delivery.menu.presentation.controller.MenuControllerV1;
@@ -17,6 +19,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,7 +30,8 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.mockito.Mockito.mock;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -93,12 +98,24 @@ public class MenuControllerV1Test {
 
     @Test
     @DisplayName("DELETE /api/v1/menus/{menuId} - 메뉴 삭제")
-    @WithMockUser
     void deleteMenu_api_success() throws Exception {
         UUID menuId = UUID.randomUUID();
-        //삭제 성공했다고 가정
+
+        //가짜 UserPrincipal 생성
+        UserPrincipal mockPrincipal = mock(UserPrincipal.class);
+        given(mockPrincipal.getName()).willReturn("ownerId");
+
+        //가짜 인증(Authentication) 객체를 직접 생성하면서 OWNER 권한 부여
+        UsernamePasswordAuthenticationToken mockAuth = new UsernamePasswordAuthenticationToken(
+                mockPrincipal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_OWNER")) //삭제 권한 부여
+        );
+
+
         mockMvc.perform(delete("/api/v1/menus/{menuId}", menuId)
-                        .with(csrf()))
+                        .with(csrf())
+                        .with(authentication(mockAuth)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").doesNotExist());
@@ -129,16 +146,26 @@ public class MenuControllerV1Test {
 
     @Test
     @DisplayName("GET /api/v1/stores/{storeId}/menus - OWNER 권한으로 요청 시 role 분기 작동 성공")
-    @WithMockUser(roles = "OWNER")
     void getMenus_OwnerRole_Success() throws Exception {
 
         UUID storeId = UUID.randomUUID();
         Page<ResMenuDto> mockPage = new PageImpl<>(List.of()); //검증이 목적이므로 빈 응답
 
-        given(menuService.getMenusWithCondition(eq(storeId), any(), any(), eq(UserRole.OWNER)))
+        UserPrincipal mockPrincipal = mock(UserPrincipal.class);
+
+        UsernamePasswordAuthenticationToken mockAuth = new UsernamePasswordAuthenticationToken(
+                mockPrincipal, null, List.of(new SimpleGrantedAuthority("ROLE_OWNER"))
+        );
+
+        given(menuService.getMenusWithCondition(eq(storeId), any(), any(), any()))
                 .willReturn(mockPage);
 
-        mockMvc.perform(get("/api/v1/stores/{storeId}/menus", storeId))
+        mockMvc.perform(
+                get("/api/v1/stores/{storeId}/menus", storeId)
+                    .param("page", "0")
+                    .param("size", "10")
+                    .with(authentication(mockAuth))
+            )
                 .andDo(print())
                 .andExpect(status().isOk());
     }
