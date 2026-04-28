@@ -21,4 +21,13 @@ public interface PgClient {
      * @return 승인 응답 (성공/실패, 거래 ID, 실패 사유)
      */
     PgResponse requestApproval(UUID orderId, int amount);
+
+    /**
+     * PG사에 환불 요청.
+     *
+     * @param pgTransactionId 원거래 PG 거래 ID
+     * @param amount          환불 금액
+     * @return 환불 응답 (성공/실패, 실패 사유)
+     */
+    PgResponse requestRefund(String pgTransactionId, int amount);
 }

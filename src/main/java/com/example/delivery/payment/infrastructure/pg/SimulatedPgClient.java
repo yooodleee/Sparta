@@ -38,4 +38,19 @@ public class SimulatedPgClient implements PgClient {
         log.warn("[SimulatedPG] 승인 실패 — orderId={}", orderId);
         return PgResponse.failure("시뮬레이션 결제 거절");
     }
+
+    @Override
+    public PgResponse requestRefund(String pgTransactionId, int amount) {
+        log.info("[SimulatedPG] 환불 요청 — pgTransactionId={}, amount={}", pgTransactionId, amount);
+
+        boolean success = ThreadLocalRandom.current().nextDouble() < SUCCESS_RATE;
+
+        if (success) {
+            log.info("[SimulatedPG] 환불 성공 — pgTransactionId={}", pgTransactionId);
+            return PgResponse.success(pgTransactionId);
+        }
+
+        log.warn("[SimulatedPG] 환불 실패 — pgTransactionId={}", pgTransactionId);
+        return PgResponse.failure("시뮬레이션 환불 거절");
+    }
 }

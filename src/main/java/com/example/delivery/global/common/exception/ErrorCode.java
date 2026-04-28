@@ -51,6 +51,7 @@ public enum ErrorCode {
     PAYMENT_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "결제 처리 중 오류가 발생했습니다."),
     INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "유효하지 않은 결제 금액입니다."),
     INVALID_PAYMENT_STATUS(HttpStatus.BAD_REQUEST, "현재 결제 상태에서는 해당 작업을 수행할 수 없습니다."),
+    REFUND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PG사 환불 요청이 실패했습니다. 잠시 후 다시 시도해 주세요."),
 
     // Review
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),

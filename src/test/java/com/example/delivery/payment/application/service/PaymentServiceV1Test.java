@@ -214,22 +214,44 @@ class PaymentServiceV1Test {
     class CancelPayment {
 
         @Test
-        @DisplayName("COMPLETED 결제 취소 → CANCELLED 상태")
+        @DisplayName("PG 환불 성공 → CANCELLED 상태")
         void completedPayment_cancelSucceeds() {
             // given
             UUID paymentId = UUID.randomUUID();
             PaymentEntity payment = buildPayment(PaymentStatus.COMPLETED);
             given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
+            given(pgClient.requestRefund(any(), anyInt()))
+                    .willReturn(PgResponse.success("SIM-refund-tx"));
 
             // when
             ResPaymentDto result = paymentService.cancelPayment(paymentId);
 
             // then
             assertThat(result.status()).isEqualTo(PaymentStatus.CANCELLED.name());
+            verify(pgClient).requestRefund(any(), anyInt());
         }
 
         @Test
-        @DisplayName("FAILED 결제 취소 시도 → INVALID_PAYMENT_STATUS 예외")
+        @DisplayName("PG 환불 실패 → REFUND_FAILED 예외, PG 호출 1회 확인")
+        void pgRefundFailed_throwsRefundFailed() {
+            // given
+            UUID paymentId = UUID.randomUUID();
+            PaymentEntity payment = buildPayment(PaymentStatus.COMPLETED);
+            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
+            given(pgClient.requestRefund(any(), anyInt()))
+                    .willReturn(PgResponse.failure("잔액 부족"));
+
+            // when / then
+            assertThatThrownBy(() -> paymentService.cancelPayment(paymentId))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.REFUND_FAILED));
+
+            verify(pgClient).requestRefund(any(), anyInt());
+        }
+
+        @Test
+        @DisplayName("FAILED 결제 취소 시도 → INVALID_PAYMENT_STATUS 예외, PG 호출 없음")
         void failedPayment_cancelThrowsException() {
             // given
             UUID paymentId = UUID.randomUUID();
@@ -241,6 +263,8 @@ class PaymentServiceV1Test {
                     .isInstanceOf(BusinessException.class)
                     .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
                             .isEqualTo(ErrorCode.INVALID_PAYMENT_STATUS));
+
+            verify(pgClient, never()).requestRefund(any(), anyInt());
         }
     }
 }

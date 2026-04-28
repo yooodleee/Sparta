@@ -105,8 +105,17 @@ public class PaymentServiceV1 {
         PaymentEntity payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
 
-        payment.cancel();   // COMPLETED → CANCELLED, 그 외 상태면 BusinessException
-        log.info("[Payment] 결제 취소 — paymentId={}", paymentId);
+        // 1. 상태 검증 + CANCELLED 전이 (COMPLETED가 아니면 BusinessException)
+        payment.cancel();
+
+        // 2. PG 환불 요청 — 실패 시 예외를 던져 트랜잭션 롤백 (CANCELLED 상태 원복)
+        PgResponse refundResponse = pgClient.requestRefund(payment.getPgTransactionId(), payment.getAmount());
+        if (!refundResponse.success()) {
+            log.warn("[Payment] 환불 실패 — paymentId={}, reason={}", paymentId, refundResponse.failReason());
+            throw new BusinessException(ErrorCode.REFUND_FAILED);
+        }
+
+        log.info("[Payment] 결제 취소 완료 — paymentId={}", paymentId);
         return ResPaymentDto.from(payment);
     }
 }
