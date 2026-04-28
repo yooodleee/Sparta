@@ -34,7 +34,7 @@ jobs:
   cd:
     name: Deploy to EC2
     needs: ci
-    if: always() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
