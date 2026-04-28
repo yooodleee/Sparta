@@ -361,6 +361,8 @@ class PaymentIntegrationTest {
             // Given
             OrderEntity order = saveOrder();
             PaymentEntity payment = savePayment(order.getOrderId(), PaymentStatus.COMPLETED);
+            given(pgClient.requestRefund(any(String.class), anyInt()))
+                    .willReturn(new PgResponse(true, null, null));
 
             // When & Then
             mockMvc.perform(post("/api/v1/payments/{id}/cancel", payment.getPaymentId()))
