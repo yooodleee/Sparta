@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class AiService {
+public class AiServiceV1 {
 
     private final GeminiClient geminiClient;
     private final AiRequestLogRepository aiRequestLogRepository;

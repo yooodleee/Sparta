@@ -1,6 +1,6 @@
 package com.example.delivery.ai.presentation.controller;
 
-import com.example.delivery.ai.application.service.AiService;
+import com.example.delivery.ai.application.service.AiServiceV1;
 import com.example.delivery.ai.domain.entity.AiRequestLogEntity;
 import com.example.delivery.ai.presentation.dto.ReqApplyAiDto;
 import com.example.delivery.global.infrastructure.security.UserPrincipal;
@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,9 +19,9 @@ import java.util.UUID;
 @RequestMapping("/api/v1/menus")
 @RequiredArgsConstructor
 @Tag(name = "AI Menu API", description = "AI를 이용한 메뉴 설명 생성 및 관리 API")
-public class AiController {
+public class AiControllerV1 {
 
-    private final AiService aiService;
+    private final AiServiceV1 aiService;
 
     @PostMapping("/ai-description")
     @Operation(

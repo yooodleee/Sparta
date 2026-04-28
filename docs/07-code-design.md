@@ -130,12 +130,20 @@ boolean isValid(String token);
 
 ### 3.5 Menu
 
-- `MenuEntity(menuId UUID, store, name, price, description, isHidden)`
-- `MenuRepository`
+- `MenuEntity(menuId UUID, storeId, name, description, price, isHidden, isSoldOut, imageUrl, aiDescription)`,
+  -`updateProduct, updateVisibility, toggleSoldOut, delete, restore` 
+- `MenuRepository` & `MenuRepositoryImpl`
+  - `findMenuByStoreCondition` : QueryDSL을 활용하여 키워드, 가격 범위, 숨김 여부 등 동적 필터링 지원
+  - `isCustomer` 플래그를 통해 고객과 사장님의 조회 가능 범위(숨김/삭제 처리된 데이터 포함 여부)를 DB 계층에서 분리
 - `MenuServiceV1`
-    - `create(storeId, ReqCreateMenuDto, loginUser)` — AI 옵션 시 `AiServiceV1.generateDescription` 호출
+    - `create(storeId, ReqCreateMenuDto)`: 메뉴 생성 시 `aiRequestId`가 존재하면, 해당 AI 로그(`AiRequestLogEntity`)를 찾아 메뉴ID와 매핑(`assignToMenu`)
+    - `updateMenu(menuId, ReqUpdateMenuDto)`: 정보 수정 및 새로운 AI 설명 반영
+    - `getMenusWithCondition`: UserRole(CUSTOMER/OWNER)을 식별하여 동적 조건 검색 위임
+    - `toggleSoldOut`, `updateVisibility`, `deleteMenu`(Soft Delete), `restoreMenu`(복구 시 즉시 `isHidden=true` 전환)
     - `update/delete/restore/toggleHide/get/list`
-- `MenuControllerV1`
+  - `MenuControllerV1`
+    - `/api/v1/stores/{storeId}/menus`, `/api/v1/menus/**`
+    - `@AuthenticationPrincipal UserPrincipal`을 통해 권한별 분기 처리
 
 ### 3.6 Order + OrderItem
 
@@ -181,18 +189,25 @@ boolean isValid(String token);
 ### 3.10 AI
 
 - `AiRequestLogEntity(aiLogId UUID, user, requestText, responseText, requestType, createdAt, createdBy)` (BaseEntity
-  미상속)
-- `AiRequestLogRepository`
-- `GeminiClient` (infrastructure)
-    - `String generate(String prompt)` — Gemini API 호출, 타임아웃/에러 전파
+  미상속, Auditing 적용)
+  - `id`, `userId`, `requestText`, `responseText`, `requestType`, `menuId`, `isApplied`
+  - 로그의 무결성을 위해 `createdAt`, `createdBy`만 직접 보유하고 수정/삭제는 불가하도록 설계
+  - `assignToMenu(menuId)`: 메뉴 최종 반영 시 `menuId` 맵핑 및 `isApplied = true`로 전환
+- `AiRequestLogRepository`(Interface) & `AiRequestLogRepositoryImpl`
+  - AI 요청 기록 저장 및 조회 처리 
+- `GeminiClient` (infrastructure/client)
+  - `RestClient`를 활용한 외부 Google Gemini API 통신
+  - Prompt Engineering 적용:
+    - `SystemInstruction`: 50자 이내, 비속어 금지, 음식 외 질문 차단 등 페르소나 및 절대 규칙 부여
+    - `Few-shot`: 모범 답안 예시와 함정 질문(날씨, 환율 등) 방어 패턴 주입(`buildFewShotAndActualRequest`)
+  - Safety Setting: HATE_SPEECH,HARASSMENT 등 유해 콘텐츠 차단 기준 설정
+- Fallback 로직: 통신 에러 발생 시 시스템이 죽지 않고 예외 메시지("직접 입력해주세요") 반환
 - `AiServiceV1`
-    - `generateProductDescription(prompt, loginUser)`:
-        1. prompt 100자 체크
-        2. `"답변을 최대한 간결하게 50자 이하로"` 부착
-        3. GeminiClient 호출
-        4. AiRequestLog 저장
-        5. 결과 반환
-- `AiControllerV1`: POST `/ai/product-description`
+    - `generateProductDescription`: 메뉴 이름으로 AI 설명을 생성하고, 'isApplied=false' 상태로 로그 선적재
+    - `applyAiDescription`: `aiLogId`를 검증(`isApplied` 중복 적용 방지)한 뒤, 수정한 메뉴 설명 또는 AI 원본을 선택하여 `MenuEntity`에 최종 반영
+- `AiControllerV1`: POST `/api/v1/menus/ai-description`(POST/PATCH)
+  -POST: AI 설명 생성 요청 및 임시 저장(로그ID 반환)
+  -PATCH `/{menuId}/ai-description/apply`: AI 설명 혹은 사장님이 튜닝한 텍스트를 메뉴 데이터에 최종 반영
 
 ## 4. DTO 네이밍 규칙
 
