@@ -134,6 +134,111 @@ sequenceDiagram
 
 > **TBD**
 
-## 4. 메뉴 생성 + AI 설명
+## 4. 메뉴 생성 + AI 
 
-> **TBD**
+메뉴 등록 시 AI를 적용하여 메뉴 설명을 생성하는 2단계(생성/저장 -> 검토/반영)프로세스. AI의 답변을 사장님이 직접 수정하여 반영할 수 있도록 함
+
+```mermaid
+sequenceDiagram
+autonumber
+actor Owner as 사장님 (OWNER)
+participant AC as AiControllerV1
+participant S as AiServiceV1
+participant Cache as Local Cache (Caffeine)
+participant CB as CircuitBreaker (Resilience4j)
+participant GC as GeminiClient
+participant Ext as Google Gemini API
+participant Event as Spring ApplicationEvent
+participant LR as AiRequestLogRepository
+participant MR as MenuRepository
+participant DB as PostgreSQL
+
+    Note over Owner, DB: [Step 1] 메뉴 설명 AI 생성 및 임시 저장 (동기/방어적 생성)
+    Owner ->> AC: POST /api/v1/menus/ai-description<br>(menuName="마늘 간장 치킨")
+    Note right of AC: [방어 1] @Valid (금지어 및 형식 검증)
+    
+    AC ->> S: generatedAndLogDescription()
+    
+    Note right of S: [최적화 1] Caffeine 기반 로컬 캐시로 호출 횟수 제한 (Rate Limit)
+    S ->> Cache: get(key: "rate_limit:userId")
+    Cache -->> S: count
+    
+    alt count >= 2 (제한 초과)
+        S -->> AC: AiLimitExceededException
+        AC -->> Owner: 429 Too Many Requests
+    else count < 2 (허용 범위)
+        S ->> Cache: increment()
+        
+        Note right of CB: [방어 2] Resilience4j를 통한 빠른 실패 (Fail-fast)<br/>및 Timeout 관리
+        S ->> CB: AI API 호출 위임
+        
+        alt 서킷 OPEN 또는 Timeout 발생
+            CB -->> S: CallNotPermitted / TimeoutException
+            S -->> AC: "직접 입력해주세요" (Fallback 반환)
+            AC -->> Owner: 200 OK (Fallback JSON)
+        else 정상 호출 진행
+            CB ->> GC: generateMenuDescription(menuName)
+            Note right of GC: System Instruction, Few-shot,<br/>Safety Settings 캡슐화
+            GC ->> Ext: POST /v1beta/models/gemini-1.5-flash
+            Ext -->> GC: 200 OK (응답 텍스트 반환)
+            
+            GC ->> GC: 사후 필터링 (정규식 검사 및 함정 질문 방어)
+            GC -->> S: 최종 생성 텍스트 반환
+            
+            S ->> LR: save(AiRequestLogEntity)<br>상태: isApplied = false
+            LR -->> S: 저장된 로그 (aiLogId 포함)
+            
+            Note right of S: [최적화 2] 이벤트 발행을 통한 로깅/통계 분리
+            S ->> Event: publishEvent(AiRequestLogEvent)
+            Event -) DB: [비동기] 데이터 분석용 로그 추가 기록
+
+            S -->> AC: aiLogId, 원본 텍스트 반환
+            AC -->> Owner: 200 OK (ResAiDescriptionDto)
+        end
+    end
+
+    Note over Owner, DB: [Step 2] 사장님 검토 후 실제 메뉴에 반영 (트랜잭션 확정)
+    Owner ->> AC: PATCH /api/v1/menus/{menuId}/ai-description/apply<br>(aiLogId, 수정된 description)
+    AC ->> S: applyAiDescription()
+    
+    Note over S, DB: 트랜잭션 시작 (@Transactional)
+    S ->> LR: findById(aiLogId)
+    LR -->> S: AiRequestLogEntity
+    
+    Note right of S: [방어 3] 중복 반영 검증 (isApplied == true 시 예외)
+    
+    S ->> MR: findById(menuId)
+    MR -->> S: MenuEntity
+    
+    S ->> S: 텍스트 결정 로직 (사장님 수정본 vs AI 원본)
+    S ->> S: MenuEntity 데이터 업데이트 (aiDescription = true)
+    S ->> S: AiRequestLogEntity 상태 변경 (isApplied = true)
+    
+    Note over S, DB: 트랜잭션 커밋 (Dirty Checking으로 인한 DB Update)
+    S -->> AC: 반영 완료
+    AC -->> Owner: 200 OK ("AI 메뉴 설명 적용 완료")
+```
+
+**1.동기적 핵심 로직 + 비동기 부가 로직**
+
+- 사장님이 다음 단계에서 사용해야 할 `aiLogId`를 즉시 받아야 하므로 로그 저장은 동기로 처리
+
+- 단, 분석용 로그나 통계 기록 등은 `Spring Event`를 통해 비동기로 처리하여 API 응답 속도를 최적화
+
+**2.다중 방어 계층 (Multi-Layer Defense)**
+
+- **1단계:** `@Valid`를 이용한 입구 컷
+
+- **2단계:** `Caffeine` 캐시를 이용한 무분별한 AI 호출 차단(비용 절감)
+
+- **3단계:** `Resilience4j` 서킷 브레이커로 외부 API(Gemini) 장애가 우리 시스템으로 전파되는 것을 방지
+
+**3.데이터 무결성 보장 (2-Step)**
+
+- `isApplied` 플래그를 통해 한 번 생성된 AI 로그가 여러 번 중복 반영되는 것을 원천 차단
+
+- 최종 반영 시 사장님이 수정한 내용이 있다면 이를 우선시하여 비즈니스 요구사항을 충족
+
+**4.인프라 효율성**
+
+- Redis 같은 별도 인프라 없이 `Caffeine` 로컬 캐시를 사용하여 간단하면서도 강력한 Rate Limit을 구현
