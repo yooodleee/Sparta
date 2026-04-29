@@ -33,8 +33,8 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
     public Page<StoreEntity> search(String keyword, UUID categoryId, UUID areaId, Pageable pageable) {
 
         BooleanExpression[] conditions = new BooleanExpression[]{
-                notDeleted(),
-                notHidden(),
+                storeNotDeleted(),
+                storeNotHidden(),
                 areaIsActive(),
                 nameContainsIgnoreCase(keyword),
                 categoryIdEq(categoryId),
@@ -65,11 +65,11 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
     /**
      * 조건 조립 (null 이면 조건 자체를 제외)
      */
-    private BooleanExpression notDeleted() {
+    private BooleanExpression storeNotDeleted() {
         return STORE.deletedAt.isNull();
     }
 
-    private BooleanExpression notHidden() {
+    private BooleanExpression storeNotHidden() {
         return STORE.isHidden.isFalse();
     }
 
