@@ -302,5 +302,35 @@ class ReviewIntegrationTest extends IntegrationTestSupport {
 
             assertThat(reviewRepository.findById(reviewId)).isEmpty();
         }
+
+        @Test
+        @DisplayName("타인 리뷰 삭제 시도 (CUSTOMER) → 403")
+        void fail_notMyReview() throws Exception {
+            // given — other01 이 작성한 리뷰
+            seedUser("other01", UserRole.CUSTOMER);
+            OrderEntity order = seedCompletedOrder("other01");
+            String otherToken = login("other01", DEFAULT_PASSWORD);
+            UUID reviewId = createReview(otherToken, order.getOrderId());
+
+            // when — customer01 이 타인 리뷰 삭제 시도
+            mockMvc.perform(delete("/api/v1/reviews/{reviewId}", reviewId)
+                            .header("Authorization", "Bearer " + customerToken))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("OWNER 권한으로 리뷰 삭제 시도 → 403")
+        void fail_ownerForbidden() throws Exception {
+            // given
+            seedUser("owner01", UserRole.OWNER);
+            String ownerToken = login("owner01", DEFAULT_PASSWORD);
+            OrderEntity order = seedCompletedOrder(CUSTOMER_USERNAME);
+            UUID reviewId = createReview(customerToken, order.getOrderId());
+
+            // when / then
+            mockMvc.perform(delete("/api/v1/reviews/{reviewId}", reviewId)
+                            .header("Authorization", "Bearer " + ownerToken))
+                    .andExpect(status().isForbidden());
+        }
     }
 }
